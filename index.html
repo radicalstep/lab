@@ -9,27 +9,91 @@
     </style>
 </head>
 <body>
+    <div>
+        <label for="gravitySlider">重力加速度 (m/s^2):</label>
+        <input type="range" id="gravitySlider" min="1" max="20" value="9.81" step="0.1">
+        <span id="gravityValue">9.81</span>
+    </div>
+    <div>
+        <label for="lengthSlider1">上部ペンデュラムの長さ (pixels):</label>
+        <input type="range" id="lengthSlider1" min="50" max="200" value="100" step="1">
+        <span id="lengthValue1">100</span>
+    </div>
+    <div>
+        <label for="lengthSlider2">下部ペンデュラムの長さ (pixels):</label>
+        <input type="range" id="lengthSlider2" min="50" max="200" value="100" step="1">
+        <span id="lengthValue2">100</span>
+    </div>
+    <div>
+        <label for="massSlider1">上部ペンデュラムの質量 (kg):</label>
+        <input type="range" id="massSlider1" min="1" max="10" value="5" step="1">
+        <span id="massValue1">10</span>
+    </div>
+    <div>
+        <label for="massSlider2">下部ペンデュラムの質量 (kg):</label>
+        <input type="range" id="massSlider2" min="1" max="50" value="1" step="1">
+        <span id="massValue2">1</span>
+    </div>
+    <div>
+        <button id="resetButton">おもりを初期位置に戻す</button>
+    </div>
     <canvas id="canvas" width="600" height="600"></canvas>
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        // 物理パラメータ
-        const g = 9.81; // 重力加速度 (m/s^2)
-        const l1 = 100; // 上部ペンデュラムの長さ (pixels)
-        const l2 = 100; // 下部ペンデュラムの長さ (pixels)
-        const m1 = 2;   // 上部ペンデュラムの質量 (kg)
-        const m2 = 1;   // 下部ペンデュラムの質量 (kg)
-
         // 初期条件
-        let theta1 = Math.PI / 2; // 上部ペンデュラムの角度 (radians)
-        let theta2 = Math.PI / 2; // 下部ペンデュラムの角度 (radians)
-        let omega1 = 0;           // 上部ペンデュラムの角速度 (radians/s)
-        let omega2 = 0;           // 下部ペンデュラムの角速度 (radians/s)
+        let g = parseFloat(document.getElementById('gravitySlider').value);
+        let l1 = parseInt(document.getElementById('lengthSlider1').value);
+        let l2 = parseInt(document.getElementById('lengthSlider2').value);
+        let m1 = parseFloat(document.getElementById('massSlider1').value);
+        let m2 = parseFloat(document.getElementById('massSlider2').value);
+
+        let theta1 = Math.PI / 2; // 上部ペンデュラムの初期角度 (radians)
+        let theta2 = Math.PI / 2; // 下部ペンデュラムの初期角度 (radians)
+        let omega1 = 0;           // 上部ペンデュラムの初期角速度 (radians/s)
+        let omega2 = 0;           // 下部ペンデュラムの初期角速度 (radians/s)
 
         // 更新間隔と描画間隔
         const dt = 0.05; // 時間ステップ (seconds)
         const interval = 1; // 描画間隔 (milliseconds)
+
+        // スライダーの値が変更されたときの処理
+        document.getElementById('gravitySlider').addEventListener('input', function() {
+            g = parseFloat(this.value);
+            document.getElementById('gravityValue').textContent = g;
+        });
+
+        document.getElementById('lengthSlider1').addEventListener('input', function() {
+            l1 = parseInt(this.value);
+            document.getElementById('lengthValue1').textContent = l1;
+        });
+
+        document.getElementById('lengthSlider2').addEventListener('input', function() {
+            l2 = parseInt(this.value);
+            document.getElementById('lengthValue2').textContent = l2;
+        });
+
+        document.getElementById('massSlider1').addEventListener('input', function() {
+            m1 = parseFloat(this.value);
+            document.getElementById('massValue1').textContent = m1;
+        });
+
+        document.getElementById('massSlider2').addEventListener('input', function() {
+            m2 = parseFloat(this.value);
+            document.getElementById('massValue2').textContent = m2;
+        });
+
+        document.getElementById('resetButton').addEventListener('click', function() {
+            // 初期状態に戻す
+            theta1 = Math.PI / 2;
+            theta2 = Math.PI / 2;
+            omega1 = 0;
+            omega2 = 0;
+
+            // 描画を更新
+            draw();
+        });
 
         function update() {
             // 数値計算
