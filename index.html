@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Double Pendulum Simulation</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="600" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // 物理パラメータ
+        const g = 9.81; // 重力加速度 (m/s^2)
+        const l1 = 100; // 上部ペンデュラムの長さ (pixels)
+        const l2 = 100; // 下部ペンデュラムの長さ (pixels)
+        const m1 = 2;   // 上部ペンデュラムの質量 (kg)
+        const m2 = 1;   // 下部ペンデュラムの質量 (kg)
+
+        // 初期条件
+        let theta1 = Math.PI / 2; // 上部ペンデュラムの角度 (radians)
+        let theta2 = Math.PI / 2; // 下部ペンデュラムの角度 (radians)
+        let omega1 = 0;           // 上部ペンデュラムの角速度 (radians/s)
+        let omega2 = 0;           // 下部ペンデュラムの角速度 (radians/s)
+
+        // 更新間隔と描画間隔
+        const dt = 0.05; // 時間ステップ (seconds)
+        const interval = 1; // 描画間隔 (milliseconds)
+
+        function update() {
+            // 数値計算
+            const alpha1 = (-g * (2 * m1 + m2) * Math.sin(theta1) - m2 * g * Math.sin(theta1 - 2 * theta2) - 2 * Math.sin(theta1 - theta2) * m2 * (omega2 * omega2 * l2 + omega1 * omega1 * l1 * Math.cos(theta1 - theta2))) / (l1 * (2 * m1 + m2 - m2 * Math.cos(2 * theta1 - 2 * theta2)));
+            const alpha2 = (2 * Math.sin(theta1 - theta2) * (omega1 * omega1 * l1 * (m1 + m2) + g * (m1 + m2) * Math.cos(theta1) + omega2 * omega2 * l2 * m2 * Math.cos(theta1 - theta2))) / (l2 * (2 * m1 + m2 - m2 * Math.cos(2 * theta1 - 2 * theta2)));
+
+            omega1 += alpha1 * dt;
+            omega2 += alpha2 * dt;
+            theta1 += omega1 * dt;
+            theta2 += omega2 * dt;
+
+            // 描画
+            draw();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const x1 = l1 * Math.sin(theta1);
+            const y1 = l1 * Math.cos(theta1);
+
+            const x2 = x1 + l2 * Math.sin(theta2);
+            const y2 = y1 + l2 * Math.cos(theta2);
+
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, canvas.height / 2);
+            ctx.lineTo(canvas.width / 2 + x1, canvas.height / 2 + y1);
+            ctx.lineTo(canvas.width / 2 + x2, canvas.height / 2 + y2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2 + x1, canvas.height / 2 + y1, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2 + x2, canvas.height / 2 + y2, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        setInterval(update, interval);
+    </script>
+</body>
+</html>
