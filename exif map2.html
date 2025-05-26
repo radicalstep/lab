@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>写真EXIF GPS情報ビューア (レイアウト改)</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* ページ全体のスクロールを禁止 */
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 15px;
+            box-sizing: border-box;
+            gap: 15px; /* 各主要セクション間の隙間 */
+        }
+
+        header {
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.6em;
+            color: #007bff;
+        }
+
+        /* #dropZoneContainer は削除 */
+
+        #mainContent {
+            display: flex; /* #infoPanel を含むように変更 */
+            flex-shrink: 0;
+            /* 高さは中の #infoPanel に依存 */
+        }
+
+        #infoPanel {
+            display: flex;
+            width: 100%;
+            gap: 15px; /* 各要素間の隙間 */
+            max-height: 280px; /* 写真、EXIF情報、ドロップゾーンを含むエリアの最大高さ */
+            align-items: flex-start; /* 上揃え */
+        }
+
+        #dropZone {
+            flex: 0 0 200px; /* ドロップゾーンの幅を固定 */
+            height: 100%; /* #infoPanel の高さに合わせる */
+            max-height: 260px; /* #infoPanelのmax-heightより少し小さく */
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #007bff;
+            background-color: #e9f5ff;
+            padding: 10px;
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        #dropZone.dragover {
+            border-color: #0056b3;
+            background-color: #d0eaff;
+        }
+        #dropZone p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        #dropZone small {
+            font-size: 0.75em;
+            color: #555;
+        }
+
+        #previewWrapper {
+            flex: 1 1 50%; /* 利用可能なスペースの割合 (ドロップゾーンとデータWrapperの残り) */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            height: 100%; /* #infoPanel の高さに合わせる */
+            max-height: 260px;
+        }
+
+        #previewImage {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        #dataWrapper {
+            flex: 0 0 300px; /* EXIFデータエリアの幅を固定、または flex-basis で指定 */
+            max-width: 320px; /* 最大幅も指定 */
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+            overflow: hidden;
+            height: 100%; /* #infoPanel の高さに合わせる */
+            max-height: 260px;
+        }
+
+        #message {
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            flex-shrink: 0;
+            text-align: center;
+        }
+        .info { background-color: #e6fffa; border: 1px solid #00bfa5; color: #00796b; }
+        .error { background-color: #ffebee; border: 1px solid #f44336; color: #c62828; }
+        .success { background-color: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; }
+
+        #exifData {
+            font-size: 0.8em; /* 少し小さくして情報量を稼ぐ */
+            word-break: break-all;
+            flex-grow: 1;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            padding: 8px; /* 少し詰める */
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+        #exifData strong {
+            color: #333;
+        }
+
+        #mapWrapper {
+            flex-grow: 1;
+            display: flex;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            display: none;
+            background-color: #e0e0e0;
+        }
+    </style>
+    <!-- exif-js ライブラリ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>写真EXIF GPS情報ビューア</h1>
+        </header>
+
+        <div id="mainContent">
+            <div id="infoPanel">
+                <div id="dropZone">
+                    <p>画像をここにドラッグ＆ドロップ</p>
+                    <small>またはクリックしてファイルを選択</small>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+
+                <div id="previewWrapper">
+                    <img id="previewImage" src="#" alt="プレビュー画像">
+                </div>
+
+                <div id="dataWrapper">
+                    <div id="message" class="info">画像をドロップまたは選択してください。</div>
+                    <div id="exifData"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mapWrapper">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const messageDiv = document.getElementById('message');
+            const exifDataDiv = document.getElementById('exifData');
+            const previewImage = document.getElementById('previewImage');
+            const mapDiv = document.getElementById('map');
+
+            let mapInstance = null;
+
+            function displayMessage(text, type = 'info') {
+                messageDiv.textContent = text;
+                messageDiv.className = ''; // Reset classes
+                messageDiv.classList.add(type);
+            }
+
+            dropZone.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (event) => {
+                event.preventDefault();
+                dropZone.classList.remove('dragover');
+                handleFiles(event.dataTransfer.files);
+            });
+
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (event) => {
+                handleFiles(event.target.files);
+                fileInput.value = null; 
+            });
+
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    const file = files[0];
+                    
+                    exifDataDiv.innerHTML = '';
+                    previewImage.src = '#'; 
+                    previewImage.style.display = 'none';
+                    if (mapInstance) {
+                        mapInstance.remove();
+                        mapInstance = null;
+                    }
+                    mapDiv.style.display = 'none';
+
+                    if (file.type.startsWith('image/')) {
+                        displayMessage('画像を処理中...', 'info');
+
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            previewImage.src = e.target.result;
+                            previewImage.style.display = 'block';
+                        }
+                        reader.readAsDataURL(file);
+
+                        processImage(file);
+                    } else {
+                        displayMessage('画像ファイルではありません。JPEGまたはPNGファイルを指定してください。', 'error');
+                    }
+                }
+            }
+
+            function processImage(file) {
+                EXIF.getData(file, function() {
+                    const allTags = EXIF.getAllTags(this);
+                    const lat = EXIF.getTag(this, "GPSLatitude");
+                    const lon = EXIF.getTag(this, "GPSLongitude");
+                    const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+                    const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
+
+                    let exifOutput = "";
+                    if (Object.keys(allTags).length === 0) {
+                        exifOutput = "EXIF情報が読み取れませんでした。";
+                         displayMessage('EXIF情報が読み取れませんでした。', 'error');
+                    } else {
+                        exifOutput = "<strong>主なEXIF情報:</strong><br>";
+                        const importantTags = ["Make", "Model", "DateTimeOriginal", "ExposureTime", "FNumber", "ISOSpeedRatings", "FocalLength", "Software", "Artist"];
+                        let foundExif = false;
+                        for (const tag of importantTags) {
+                            if (allTags[tag]) {
+                                exifOutput += `<strong>${tag}:</strong> ${allTags[tag]}<br>`;
+                                foundExif = true;
+                            }
+                        }
+                         if (!foundExif && !(lat && lon && latRef && lonRef)) {
+                             exifOutput += "この画像には主要なEXIF情報やGPS情報が見つかりませんでした。<br>";
+                         }
+                        
+                        if (lat && lon && latRef && lonRef) {
+                            exifOutput += `<strong>GPSLatitude:</strong> ${lat.join(', ')} ${latRef}<br>`;
+                            exifOutput += `<strong>GPSLongitude:</strong> ${lon.join(', ')} ${lonRef}<br>`;
+                        } else {
+                            exifOutput += "<br><strong>GPS情報:</strong> 見つかりません";
+                        }
+                    }
+                    exifDataDiv.innerHTML = exifOutput;
+
+                    if (mapInstance) {
+                        mapInstance.remove();
+                        mapInstance = null;
+                    }
+                    mapDiv.style.display = 'none'; 
+
+                    if (lat && lon && latRef && lonRef) {
+                        const decimalLat = convertDMSToDD(lat[0], lat[1], lat[2], latRef);
+                        const decimalLon = convertDMSToDD(lon[0], lon[1], lon[2], lonRef);
+
+                        if (!isNaN(decimalLat) && !isNaN(decimalLon)) {
+                            mapDiv.style.display = 'block';
+                            mapInstance = L.map(mapDiv).setView([decimalLat, decimalLon], 15);
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            }).addTo(mapInstance);
+                            L.marker([decimalLat, decimalLon]).addTo(mapInstance)
+                                .bindPopup(`<b>撮影場所</b><br>緯度: ${decimalLat.toFixed(6)}<br>経度: ${decimalLon.toFixed(6)}<br><a href="https://www.google.com/maps?q=${decimalLat},${decimalLon}" target="_blank">Google Mapで見る</a>`)
+                                .openPopup();
+                            
+                            setTimeout(() => {
+                                if (mapInstance) mapInstance.invalidateSize();
+                            }, 100);
+
+                            displayMessage(`GPS情報に基づいて地図を表示しました。`, 'success');
+                        } else {
+                            displayMessage('GPS座標の変換に失敗しました。', 'error');
+                        }
+                    } else {
+                         if (Object.keys(allTags).length > 0) {
+                            displayMessage('この画像にはGPS情報が含まれていません。', 'error');
+                         }
+                    }
+                });
+            }
+
+            function convertDMSToDD(degrees, minutes, seconds, direction) {
+                let dd = Number(degrees) + Number(minutes)/60 + Number(seconds)/(60*60);
+                if (direction == "S" || direction == "W") {
+                    dd = dd * -1;
+                }
+                return dd;
+            }
+        });
+    </script>
+</body>
+</html>
