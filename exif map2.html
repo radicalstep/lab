@@ -34,26 +34,23 @@
             color: #007bff;
         }
 
-        /* #dropZoneContainer は削除 */
-
         #mainContent {
-            display: flex; /* #infoPanel を含むように変更 */
+            display: flex;
             flex-shrink: 0;
-            /* 高さは中の #infoPanel に依存 */
         }
 
         #infoPanel {
             display: flex;
             width: 100%;
-            gap: 15px; /* 各要素間の隙間 */
-            max-height: 280px; /* 写真、EXIF情報、ドロップゾーンを含むエリアの最大高さ */
-            align-items: flex-start; /* 上揃え */
+            gap: 15px;
+            max-height: 280px;
+            align-items: flex-start;
         }
 
         #dropZone {
-            flex: 0 0 200px; /* ドロップゾーンの幅を固定 */
-            height: 100%; /* #infoPanel の高さに合わせる */
-            max-height: 260px; /* #infoPanelのmax-heightより少し小さく */
+            flex: 0 0 200px;
+            height: 100%;
+            max-height: 260px;
             border: 2px dashed #007bff;
             border-radius: 10px;
             display: flex;
@@ -82,7 +79,7 @@
         }
 
         #previewWrapper {
-            flex: 1 1 50%; /* 利用可能なスペースの割合 (ドロップゾーンとデータWrapperの残り) */
+            flex: 1 1 50%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -91,23 +88,75 @@
             background-color: #fff;
             padding: 10px;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow: hidden; /* はみ出した画像は表示しない */
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            height: 100%; /* #infoPanel の高さに合わせる */
+            height: 100%;
             max-height: 260px;
+            position: relative; /* 回転ボタン、画像配置のため */
         }
 
         #previewImage {
-            max-width: 100%;
-            max-height: 100%;
+            max-width: 100%; /* 初期表示用 */
+            max-height: 100%;/* 初期表示用 */
             display: none;
-            object-fit: contain;
+            object-fit: contain; /* 初期表示用 */
             border-radius: 4px;
+            /* transition: transform 0.3s ease-in-out;  ドラッグ中は邪魔になることがあるのでコメントアウト or mousedown/upで制御 */
+            transform-origin: center center; /* 回転・拡大縮小の中心を中央に */
+            cursor: grab; /* ドラッグ可能であることを示すカーソル */
+            user-select: none; /* 画像のドラッグ選択を防ぐ */
+            -webkit-user-drag: none; /* Chrome/Safariでの画像ドラッグを防ぐ */
         }
 
+        #rotateControls {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 8px;
+            border-radius: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 10px;
+            opacity: 0.2;
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
+            z-index: 10; /* 他の要素より手前に表示 */
+        }
+
+        #previewWrapper:hover #rotateControls {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #rotateControls button {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        #rotateControls button:hover {
+            background-color: #e0e0e0;
+            box-shadow: 0 0 5px rgba(0,0,0,0.15);
+        }
+        #rotateControls button:active {
+            background-color: #d0d0d0;
+        }
+
+
         #dataWrapper {
-            flex: 0 0 300px; /* EXIFデータエリアの幅を固定、または flex-basis で指定 */
-            max-width: 320px; /* 最大幅も指定 */
+            flex: 0 0 300px;
+            max-width: 320px;
             display: flex;
             flex-direction: column;
             background-color: #fff;
@@ -116,7 +165,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             box-sizing: border-box;
             overflow: hidden;
-            height: 100%; /* #infoPanel の高さに合わせる */
+            height: 100%;
             max-height: 260px;
         }
 
@@ -133,12 +182,12 @@
         .success { background-color: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; }
 
         #exifData {
-            font-size: 0.8em; /* 少し小さくして情報量を稼ぐ */
+            font-size: 0.8em;
             word-break: break-all;
             flex-grow: 1;
             overflow-y: auto;
             background-color: #f9f9f9;
-            padding: 8px; /* 少し詰める */
+            padding: 8px;
             border-radius: 4px;
             border: 1px solid #eee;
         }
@@ -189,6 +238,10 @@
 
                 <div id="previewWrapper">
                     <img id="previewImage" src="#" alt="プレビュー画像">
+                    <div id="rotateControls" style="display: none;">
+                        <button id="rotateLeftBtn" title="左に90度回転">↺</button>
+                        <button id="rotateRightBtn" title="右に90度回転">↻</button>
+                    </div>
                 </div>
 
                 <div id="dataWrapper">
@@ -210,14 +263,41 @@
             const messageDiv = document.getElementById('message');
             const exifDataDiv = document.getElementById('exifData');
             const previewImage = document.getElementById('previewImage');
+            const previewWrapper = document.getElementById('previewWrapper');
             const mapDiv = document.getElementById('map');
 
+            const rotateControls = document.getElementById('rotateControls');
+            const rotateLeftBtn = document.getElementById('rotateLeftBtn');
+            const rotateRightBtn = document.getElementById('rotateRightBtn');
+            
             let mapInstance = null;
+
+            // 画像変換用の状態変数
+            let currentRotation = 0;
+            let scale = 1;
+            let translateX = 0;
+            let translateY = 0;
+            let isDragging = false;
+            let dragStartX, dragStartY;
+            let initialTranslateX, initialTranslateY;
+
+            const ZOOM_SENSITIVITY = 0.001; // ホイール感度 (小さいほど鈍感)
+            const MIN_SCALE = 0.1;
+            const MAX_SCALE = 10;
 
             function displayMessage(text, type = 'info') {
                 messageDiv.textContent = text;
                 messageDiv.className = ''; // Reset classes
                 messageDiv.classList.add(type);
+            }
+
+            function applyImageTransforms() {
+                if (previewImage.style.display === 'block') {
+                    previewImage.style.transform = 
+                        `translate(${translateX}px, ${translateY}px) ` +
+                        `rotate(${currentRotation}deg) ` +
+                        `scale(${scale})`;
+                }
             }
 
             dropZone.addEventListener('dragover', (event) => {
@@ -251,6 +331,17 @@
                     exifDataDiv.innerHTML = '';
                     previewImage.src = '#'; 
                     previewImage.style.display = 'none';
+                    
+                    currentRotation = 0;
+                    scale = 1;
+                    translateX = 0;
+                    translateY = 0;
+                    applyImageTransforms(); 
+                    previewImage.style.cursor = 'grab';
+                    isDragging = false; 
+
+                    rotateControls.style.display = 'none';
+
                     if (mapInstance) {
                         mapInstance.remove();
                         mapInstance = null;
@@ -264,6 +355,13 @@
                         reader.onload = function(e) {
                             previewImage.src = e.target.result;
                             previewImage.style.display = 'block';
+                            
+                            currentRotation = 0; 
+                            scale = 1;
+                            translateX = 0;
+                            translateY = 0;
+                            applyImageTransforms();
+                            rotateControls.style.display = 'flex';
                         }
                         reader.readAsDataURL(file);
 
@@ -352,6 +450,79 @@
                 }
                 return dd;
             }
+
+            rotateRightBtn.addEventListener('click', () => {
+                currentRotation = (currentRotation + 90) % 360;
+                applyImageTransforms();
+            });
+
+            rotateLeftBtn.addEventListener('click', () => {
+                currentRotation = (currentRotation - 90 + 360) % 360;
+                applyImageTransforms();
+            });
+
+            previewWrapper.addEventListener('wheel', (event) => {
+                if (previewImage.style.display !== 'block' || event.buttons !== 0) return; // マウスボタンが押されている間はホイール操作を無効化
+                event.preventDefault();
+
+                const oldScale = scale;
+                let scaleAmount = 1 - event.deltaY * ZOOM_SENSITIVITY;
+                scale *= scaleAmount;
+                scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+
+                const rect = previewWrapper.getBoundingClientRect();
+                const mouseXInWrapper = event.clientX - rect.left;
+                const mouseYInWrapper = event.clientY - rect.top;
+
+                const imageVisualCenterX = previewWrapper.offsetWidth / 2 + translateX;
+                const imageVisualCenterY = previewWrapper.offsetHeight / 2 + translateY;
+                
+                const mouseRelativeToCenterX = mouseXInWrapper - imageVisualCenterX;
+                const mouseRelativeToCenterY = mouseYInWrapper - imageVisualCenterY;
+
+                translateX -= mouseRelativeToCenterX * (scale / oldScale - 1);
+                translateY -= mouseRelativeToCenterY * (scale / oldScale - 1);
+                
+                applyImageTransforms();
+            }, { passive: false }); // passive: false で preventDefault を有効に
+
+            previewImage.addEventListener('mousedown', (event) => {
+                if (previewImage.style.display !== 'block' || event.button !== 0) return; // 左クリックのみ
+                event.preventDefault(); 
+                isDragging = true;
+                dragStartX = event.clientX;
+                dragStartY = event.clientY;
+                initialTranslateX = translateX;
+                initialTranslateY = translateY;
+                previewImage.style.cursor = 'grabbing';
+                previewImage.style.transition = 'none'; // ドラッグ中はトランジションをオフ
+            });
+
+            document.addEventListener('mousemove', (event) => {
+                if (!isDragging || previewImage.style.display !== 'block') return;
+
+                const dx = event.clientX - dragStartX;
+                const dy = event.clientY - dragStartY;
+                
+                translateX = initialTranslateX + dx;
+                translateY = initialTranslateY + dy;
+                
+                applyImageTransforms();
+            });
+
+            document.addEventListener('mouseup', (event) => {
+                if (!isDragging || previewImage.style.display !== 'block') return;
+                if (event.button !== 0 && isDragging) { // 左クリック以外でmouseupされた場合もドラッグ終了
+                    isDragging = false;
+                    previewImage.style.cursor = 'grab';
+                    previewImage.style.transition = ''; // トランジションを元に戻す (CSSの定義に従う)
+                    return;
+                }
+                isDragging = false;
+                previewImage.style.cursor = 'grab';
+                previewImage.style.transition = ''; // トランジションを元に戻す
+            });
+
         });
     </script>
 </body>
