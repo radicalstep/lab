@@ -123,7 +123,8 @@ body {
 #photo-gallery-container {
     padding: 20px;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 15px;
+    row-gap: 10px;    /* 行間を10pxに */
+    column-gap: 15px; /* 列間は15pxのまま */
     overflow-y: auto;
 }
 #photo-gallery-container.active-content {
