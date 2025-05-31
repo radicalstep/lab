@@ -3,19 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>アニメ聖地ギャラリー (Google風UI案)</title>
+    <title>アニメ聖地ギャラリー (動的フィルター)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-container">
         <aside id="left-pane">
             <h2>フィルター</h2>
-            <ul id="filter-list">
-                <li class="filter-item active" data-filter="all">すべて</li>
-                <li class="filter-item" data-filter="anime-a">アニメA 「あの夏で待ってる」</li>
-                <li class="filter-item" data-filter="anime-b">アニメB 「ゆるキャン△」</li>
-                <li class="filter-item" data-filter="anime-c">アニメC 「響け！ユーフォニアム」</li>
-            </ul>
+            <ul id="filter-list"></ul>
         </aside>
 
         <main id="right-pane">
@@ -24,20 +21,16 @@
                 <button id="close-detail-view-button" style="display: none;">× ギャラリーに戻る</button>
             </header>
 
-            <!-- タイルギャラリーコンテナ -->
-            <div id="photo-gallery-container" class="active-content">
-                <!-- JavaScriptで写真タイルがここに挿入されます -->
+            <div id="photo-gallery-container" class="content-view">
+                <!-- 写真タイルはJavaScriptで生成されます -->
             </div>
 
-            <!-- 詳細ビューコンテナ (初期非表示) -->
             <div id="detail-view-container" class="content-view">
                 <div id="detail-view-image-pane">
-                    <!-- 通常の1枚表示エリア -->
                     <div id="detail-single-image-view" class="detail-image-display active-detail-image-display">
                         <img id="detail-modal-image" src="" alt="拡大写真">
                         <p id="detail-image-toggle-hint">画像クリックでアニメシーンと切り替え</p>
                     </div>
-                    <!-- 左右2枚表示エリア (初期非表示) -->
                     <div id="detail-side-by-side-view" class="detail-image-display">
                         <div class="detail-sbs-image-wrapper">
                             <img id="detail-sbs-anime-image" src="" alt="アニメシーン比較">
@@ -53,25 +46,35 @@
                 <div id="detail-view-info-pane">
                     <h2 id="detail-title">写真のタイトル</h2>
                     <p id="detail-anime-title-display">アニメ名</p>
-                    <div id="detail-photo-description-area">
-                        <h3><i class="fas fa-info-circle"></i> 説明</h3>
-                        <p id="detail-photo-description">ここに写真のディスクリプションが表示されます。</p>
+                    <div id="detail-photo-info-area">
+                        <h3><i class="fas fa-info-circle"></i> 写真情報</h3>
+                        <textarea id="detail-photo-description" readonly rows="5"></textarea>
+                        <p id="detail-datetime-original" class="photo-meta-info"></p>
                     </div>
                     <div id="detail-map-area">
                         <h3><i class="fas fa-map-marker-alt"></i> 撮影場所</h3>
-                        <div id="detail-map-placeholder">
-                            地図がここに表示されます (ダミー)
+                        <div id="detail-map-element" style="height: 230px; width: 100%; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc;">
+                            <!-- 地図はJavaScriptで生成されます -->
                         </div>
                         <a id="detail-streetview-link" href="#" target="_blank" style="display: none;">
                             <i class="fas fa-street-view"></i> ストリートビューで見る
                         </a>
                     </div>
+                    <!-- ★ここから追加: サムネイルリスト表示エリア -->
+                    <div id="detail-thumbnail-area">
+                        <h3><i class="fas fa-images"></i> 他の写真</h3>
+                        <div id="detail-thumbnail-list">
+                            <!-- サムネイルはJavaScriptで生成されます -->
+                        </div>
+                    </div>
+                    <!-- ★ここまで追加 -->
                 </div>
             </div>
         </main>
     </div>
-    <!-- Font Awesome (アイコン用 - 任意) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <script src="script.js"></script>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
