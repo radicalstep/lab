@@ -126,6 +126,7 @@ body {
     row-gap: 10px;    /* 行間を10pxに */
     column-gap: 15px; /* 列間は15pxのまま */
     overflow-y: auto;
+    align-content: start; /* これを追加！ */
 }
 #photo-gallery-container.active-content {
     display: grid;
