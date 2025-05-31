@@ -1,28 +1,8 @@
 [
   {
-    "id": 1,
-    "realSrc": "/images/02r.jpg",
-    "animeSrc": "/images/02c.jpg",
-    "title": "本栖湖キャンプ場",
-    "animeFilterTag": "anime-a",
-    "description": "第91話アプトの廃線さんぽ道。歴史を感じることができます",
-    "animeTitleDisplay": "ゆるキャン△",
-    "uploadedAt": "2023-02-20T14:30:00Z"
-  },
-    {
-    "id": 2,
-    "realSrc": "/images/97d3b69e.jpg",
-    "animeSrc": "/images/4984f3c3.jpg",
-    "title": "成田国際空港第１ターミナル北ウイング",
-    "animeFilterTag": "maria",
-    "description": "３期５話",
-    "animeTitleDisplay": "マリア様がみてる",
-    "uploadedAt": "2025-05-31T19:24:48.922Z"
-  },
-    {
     "id": 3,
-    "realSrc": "/images/65487765.jpg",
-    "animeSrc": "/images/caebcb51.jpg",
+    "realSrc": "https://radicalstep.github.io/lab/images/65487765.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/caebcb51.jpg",
     "title": "大竹市総合市民会館",
     "animeFilterTag": "maria",
     "description": "１期５話",
@@ -31,8 +11,8 @@
   },
   {
     "id": 4,
-    "realSrc": "/images/39e0eb36.jpg",
-    "animeSrc": "/images/bc1c58c4.jpg",
+    "realSrc": "https://radicalstep.github.io/lab/images/39e0eb36.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/bc1c58c4.jpg",
     "title": "「三笠」バス停付近",
     "animeFilterTag": "maria",
     "description": "３期１話",
@@ -41,12 +21,22 @@
   },
   {
     "id": 5,
-    "realSrc": "/images/348fec1b.jpg",
-    "animeSrc": "/images/bbc7560e.jpg",
+    "realSrc": "https://radicalstep.github.io/lab/images/348fec1b.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/bbc7560e.jpg",
     "title": "軽井沢観光会館",
     "animeFilterTag": "maria",
     "description": "３期１話",
     "animeTitleDisplay": "マリア様がみてる",
     "uploadedAt": "2025-05-31T19:55:31.794Z"
+  },
+  {
+    "id": 6,
+    "realSrc": "https://radicalstep.github.io/lab/images/601a114b.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/20f4c80d.jpg",
+    "title": "ミカドコーヒー",
+    "animeFilterTag": "maria",
+    "description": "３期１話",
+    "animeTitleDisplay": "マリア様がみてる",
+    "uploadedAt": "2025-05-31T20:03:15.928Z"
   }
 ]
