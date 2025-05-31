@@ -12,9 +12,11 @@ body {
 .app-container {
     display: flex;
     min-height: 100vh;
+    height: 100vh;
     width: 100%;
     max-width: 1600px;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    overflow: hidden;
 }
 
 /* 左ペイン */
@@ -85,6 +87,7 @@ body {
     align-items: center;
     position: relative;
     z-index: 10;
+    flex-shrink: 0;
 }
 
 #right-pane-header-title {
@@ -110,7 +113,7 @@ body {
 .content-view {
     display: none;
     flex-grow: 1;
-    overflow-y: auto;
+    min-height: 0;
 }
 .content-view.active-content {
     display: flex;
@@ -119,9 +122,9 @@ body {
 /* タイルギャラリーコンテナ */
 #photo-gallery-container {
     padding: 20px;
-    display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 15px;
+    overflow-y: auto;
 }
 #photo-gallery-container.active-content {
     display: grid;
@@ -147,9 +150,9 @@ body {
 .photo-tile img {
     width: 100%;
     height: 140px;
-    object-fit: contain; /* 画像が歪まないように contain を推奨 */
+    object-fit: contain;
     display: block;
-    background-color: #f0f0f0; /* 画像の背景色 */
+    background-color: #f0f0f0;
 }
 
 .photo-tile-info {
@@ -182,6 +185,7 @@ body {
 /* 詳細ビューコンテナ */
 #detail-view-container {
     flex-direction: row;
+    overflow: hidden;
 }
 #detail-view-container.active-content {
     display: flex;
@@ -191,40 +195,48 @@ body {
 #detail-view-image-pane {
     flex: 0 0 70%;
     background-color: #2c2c2c;
-    padding: 20px;
+    padding-top: 20px;
+    padding-right: 20px;
+    padding-bottom: 45px;
+    padding-left: 20px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    overflow-y: auto;
+    overflow-y: hidden;
     position: relative;
 }
 
 #detail-view-info-pane {
     flex: 0 0 30%;
     background-color: #fff;
-    padding: 25px;
+    padding: 20px 25px; 
     box-sizing: border-box;
-    overflow-y: auto;
     border-left: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; 
 }
 
 /* 詳細ビュー内の画像表示エリア */
 .detail-image-display {
-    display: none;
+    display: none;      
     width: 100%;
-    text-align: center;
+    height: 100%;       
+    position: relative; 
 }
 .detail-image-display.active-detail-image-display {
-    display: block;
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center;     
 }
+
 
 #detail-single-image-view #detail-modal-image {
     max-width: 100%;
-    max-height: 75vh;
-    display: block;
-    margin: 0 auto 5px auto;
+    max-height: 80vh; 
     border: 3px solid #444;
     border-radius: 4px;
     cursor: pointer;
@@ -234,40 +246,49 @@ body {
 #detail-image-toggle-hint {
     font-size: 0.85em;
     color: #ccc;
-    margin-top: 5px;
+    position: absolute; 
+    bottom: 0;          
+    left: 0;            
+    right: 0;           
+    padding-bottom: 5px;
+    text-align: center; 
 }
 
-#detail-side-by-side-view {
-    display: none;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
+#detail-side-by-side-view { 
+    flex-direction: row; 
+    justify-content: space-around; 
+    align-items: stretch; 
     gap: 15px;
-    width: 100%;
 }
 #detail-side-by-side-view.active-detail-image-display {
-    display: flex;
+    display: flex; 
 }
+
 
 .detail-sbs-image-wrapper {
     flex: 1;
     min-width: 0;
     text-align: center;
+    display: flex; 
+    flex-direction: column; 
 }
 
 .detail-sbs-image-wrapper img {
     max-width: 100%;
-    max-height: 70vh;
+    max-height: calc(100% - 1.2em - 3px); 
     border: 2px solid #555;
     border-radius: 4px;
-    margin-bottom: 5px;
     object-fit: contain;
+    flex-grow: 1; 
+    min-height: 0; 
 }
 
 .detail-sbs-caption {
     font-size: 0.9em;
     color: #ddd;
-    margin-top: 0;
+    margin-top: 3px; 
+    line-height: 1.2; 
+    flex-shrink: 0; 
 }
 
 #detail-toggle-comparison-button {
@@ -278,75 +299,94 @@ body {
     border-radius: 20px;
     cursor: pointer;
     font-size: 0.85em;
-    margin-top: 20px;
-    position: absolute;
-    bottom: 20px;
+    position: absolute; 
+    bottom: 15px;
     left: 50%;
     transform: translateX(-50%);
+    z-index: 10; 
 }
 #detail-toggle-comparison-button:hover {
     background-color: rgba(255,255,255,0.3);
     border-color: rgba(255,255,255,0.7);
 }
 
-
-/* 詳細ビュー右側の情報エリア */
-#detail-view-info-pane h2, #detail-view-info-pane h3 {
-    margin-top: 0;
-    color: #333;
-}
-#detail-view-info-pane h2 {
+#detail-view-info-pane h2 { 
     font-size: 1.6em;
-    margin-bottom: 5px;
+    margin-top: 0; 
+    margin-bottom: 1px; /* ★調整 */
+    flex-shrink: 0;
 }
-#detail-anime-title-display {
+#detail-anime-title-display { 
     font-size: 1em;
     color: #555;
-    margin-bottom: 20px;
+    margin-bottom: 5px; /* ★調整 */
     font-weight: 500;
+    flex-shrink: 0;
 }
 
-#detail-view-info-pane h3 {
-    font-size: 1.1em;
+#detail-photo-info-area { 
+    display: flex;
+    flex-direction: column;
+    min-height: 150px; 
+}
+#detail-photo-info-area h3 { 
     margin-bottom: 8px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #eee;
-    color: #444;
-}
-#detail-view-info-pane h3 i {
-    margin-right: 8px;
-    color: #007bff;
+    flex-shrink: 0;
 }
 
-#detail-photo-info-area {
-    margin-bottom: 25px;
-}
-
-#detail-photo-description {
+#detail-photo-description { 
+    width: 100%;
+    height: 100px; 
+    min-height: 50px; 
+    max-height: 200px; 
+    padding: 8px;
+    font-family: inherit;
     font-size: 0.95em;
     line-height: 1.7;
     color: #555;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    resize: none;
+    overflow-y: auto; 
+    margin-bottom: 10px; 
 }
 
-.photo-meta-info {
+.photo-meta-info { 
     font-size: 0.85em;
     color: #777;
-    margin-top: 10px;
+    margin-top: 0;
+    flex-shrink: 0;
+    margin-bottom: 12px; 
 }
 .photo-meta-info i {
     margin-right: 5px;
     color: #888;
 }
 
+#detail-map-area { 
+    flex-shrink: 0; 
+    margin-bottom: 12px; 
+}
+#detail-map-area h3 { 
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
 
 #detail-map-element {
-    /* height, width, margin-bottom, border-radius, border はHTMLのインラインスタイルで指定 */
-    background-color: #e9ecef; /* 地図読み込み中の背景 */
+    background-color: #e9ecef;
+    height: 170px; 
+    width: 100%;
+    margin-bottom: 8px; 
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    flex-shrink: 0;
 }
 
 #detail-streetview-link {
     display: inline-block;
-    margin-top: 0; /* 地図との間隔は detail-map-element の margin-bottom で調整 */
+    margin-top: 0;
     color: #007bff;
     text-decoration: none;
     font-size: 0.95em;
@@ -354,6 +394,7 @@ body {
     background-color: #e7f3ff;
     border-radius: 4px;
     transition: background-color 0.2s;
+    flex-shrink: 0;
 }
 #detail-streetview-link:hover {
     background-color: #d0e6ff;
@@ -363,20 +404,80 @@ body {
     margin-right: 6px;
 }
 
+#detail-thumbnail-area {
+    padding-top: 8px; 
+    border-top: 1px solid #eee;
+    flex-shrink: 0; 
+    height: 125px; 
+    display: flex; 
+    flex-direction: column; 
+}
 
-/* レスポンシブ対応 */
+#detail-thumbnail-area h3 {
+    font-size: 1.0em;
+    margin-bottom: 6px; 
+    color: #555;
+    flex-shrink: 0; 
+}
+#detail-thumbnail-area h3 i {
+    margin-right: 6px;
+    color: #6c757d;
+}
+
+#detail-thumbnail-list {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 8px; 
+    gap: 6px; 
+    flex-grow: 1; 
+    min-height: 0; 
+}
+
+.detail-thumbnail-item {
+    flex-shrink: 0;
+    width: 80px; 
+    height: 65px; 
+    border: 2px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.detail-thumbnail-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.detail-thumbnail-item:hover {
+    border-color: #999;
+}
+
+.detail-thumbnail-item.active-thumbnail {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+
 @media (max-width: 1024px) {
-    #detail-view-image-pane {
-        flex: 0 0 60%;
-    }
-    #detail-view-info-pane {
-        flex: 0 0 40%;
-    }
+    #detail-view-info-pane { flex: 0 0 40%; padding: 15px 20px; overflow-y: auto; }
+    #detail-view-info-pane h2 { margin-bottom: 1px; } /* ★調整 */
+    #detail-anime-title-display { margin-bottom: 5px; } /* ★調整 */
+    #detail-photo-info-area { min-height: 120px; }
+    #detail-photo-description { height: 80px; min-height: 40px; max-height: 150px; }
+    #detail-map-element { height: 150px; } 
+    #detail-thumbnail-area { height: 115px; } 
+    .detail-thumbnail-item { width: 75px; height: 60px; } 
+    #detail-thumbnail-list { gap: 5px; } 
 }
 
 @media (max-width: 768px) {
     .app-container {
         flex-direction: column;
+        height: auto;
+        min-height: 100vh;
     }
     #left-pane {
         width: 100%;
@@ -384,63 +485,115 @@ body {
         border-right: none;
         border-bottom: 1px solid #d1d5db;
     }
-    #right-pane header {
-        padding: 0.7rem 15px;
-    }
-    #right-pane-header-title {
-        font-size: 1.3em;
-    }
-    #close-detail-view-button {
-        font-size: 0.8em;
-        padding: 6px 10px;
-    }
+    #right-pane header { padding: 0.7rem 15px; }
+    #right-pane-header-title { font-size: 1.3em; }
+    #close-detail-view-button { font-size: 0.8em; padding: 6px 10px; }
 
     #photo-gallery-container {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         padding: 15px;
     }
-    .photo-tile {
-        height: 170px;
-    }
-    .photo-tile img {
-        height: 110px;
-    }
+    .photo-tile { height: 170px; }
+    .photo-tile img { height: 110px; }
 
     #detail-view-container.active-content {
         flex-direction: column;
     }
     #detail-view-image-pane {
-        flex: 0 0 auto; /* 幅を自動に */
-        height: auto; /* 高さを内容に合わせる */
-        min-height: 50vh; /* 最低限の高さを確保 */
-        padding: 15px;
+        flex: 0 0 auto;
+        height: auto;
+        min-height: 50vh;
+        padding-top: 15px;
+        padding-right: 15px;
+        padding-bottom: 50px; 
+        padding-left: 15px;
+        overflow-y: visible; 
     }
     #detail-view-info-pane {
-        flex-grow: 1; /* 残りの高さを取る */
+        flex-grow: 1; 
         border-left: none;
         border-top: 1px solid #e0e0e0;
-        padding: 20px;
+        padding: 15px; 
+        overflow-y: auto; 
+    }
+
+    .detail-image-display.active-detail-image-display { 
     }
 
     #detail-single-image-view #detail-modal-image {
-        max-height: 45vh; /* スマホでは画像表示域の高さを調整 */
+        max-height: 50vh;
     }
-    #detail-side-by-side-view {
-        flex-direction: column;
-        align-items: center;
+    #detail-side-by-side-view { 
+        flex-direction: column; 
+        align-items: center; 
         gap: 10px;
+        height: auto; 
     }
     .detail-sbs-image-wrapper img {
-        max-height: 35vh;
+        max-height: 30vh; 
+        flex-grow: 0; 
     }
+    .detail-sbs-caption {
+        margin-top: 5px;
+    }
+
+    #detail-image-toggle-hint { 
+        position: static; 
+        margin-top: 5px;  
+        padding-bottom: 0;
+    }
+
     #detail-toggle-comparison-button {
         font-size: 0.8em;
-        margin-top: 15px;
-        position: static; /* スマホでは通常配置 */
+        margin-top: 10px;
+        position: static;
         transform: none;
         margin-bottom: 10px;
     }
-    #detail-view-info-pane h2 { font-size: 1.4em; }
-    #detail-anime-title-display { font-size: 0.95em; margin-bottom: 15px; }
-    #detail-map-element { height: 200px; } /* スマホでの地図の高さ */
+
+    #detail-view-info-pane h2 { font-size: 1.4em; margin-bottom: 1px; } /* ★調整 */
+    #detail-anime-title-display { font-size: 0.95em; margin-bottom: 5px; } /* ★調整 */
+
+
+    #detail-photo-info-area {
+        flex-grow: 0; 
+        margin-bottom: 15px;
+        overflow: visible; 
+        min-height: 0; 
+    }
+
+    #detail-photo-description {
+        flex-grow: 0; 
+        height: auto; 
+        min-height: 60px; 
+        max-height: 120px; 
+        overflow-y: auto; 
+    }
+    
+    .photo-meta-info {
+        margin-bottom: 15px;
+    }
+
+    #detail-map-area {
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    #detail-map-element {
+        height: 160px; 
+    }
+    
+    #detail-thumbnail-area {
+        margin-top: 0; 
+        height: auto; 
+        min-height: 90px; 
+        padding-top: 8px;
+    }
+    #detail-thumbnail-list {
+        padding-bottom: 5px;
+        gap: 5px; 
+    }
+    .detail-thumbnail-item {
+        width: 70px; 
+        height: 55px;
+    }
 }
