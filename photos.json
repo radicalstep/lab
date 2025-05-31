@@ -1,8 +1,8 @@
 [
   {
     "id": 1,
-    "realSrc": "/images/02r.jpg",
-    "animeSrc": "/images/02c.jpg",
+    "realSrc": "https://radicalstep.github.io/lab/images/02r.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/02c.jpg",
     "title": "本栖湖キャンプ場",
     "animeFilterTag": "anime-a",
     "description": "第91話アプトの廃線さんぽ道。歴史を感じることができます",
@@ -11,8 +11,8 @@
   },
     {
     "id": 2,
-    "realSrc": "/images/97d3b69e.jpg",
-    "animeSrc": "/images/4984f3c3.jpg",
+    "realSrc": "https://radicalstep.github.io/lab/images/97d3b69e.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/4984f3c3.jpg",
     "title": "成田国際空港第１ターミナル北ウイング",
     "animeFilterTag": "maria",
     "description": "３期５話",
