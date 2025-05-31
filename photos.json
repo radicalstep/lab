@@ -71,8 +71,8 @@
   },
   {
     "id": 8,
-    "realSrc": "https://radicalstep.github.io/lab/images/",
-    "animeSrc": "https://radicalstep.github.io/lab/images/",
+    "realSrc": "https://radicalstep.github.io/lab/images/e53dd233.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/03f85a27.jpg",
     "title": "横川ＳＡ（下り）",
     "animeFilterTag": "maria",
     "description": "３期１話",
@@ -98,5 +98,15 @@
     "description": "４期13話",
     "animeTitleDisplay": "マリア様がみてる",
     "uploadedAt": "2025-05-31T20:22:43.733Z"
+  },
+  {
+    "id": 11,
+    "realSrc": "https://radicalstep.github.io/lab/images/26ea98dd.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/9683fd90.jpg",
+    "title": "中央三井信託銀行吉祥寺支店",
+    "animeFilterTag": "maria",
+    "description": "１期13話",
+    "animeTitleDisplay": "マリア様がみてる",
+    "uploadedAt": "2025-05-31T20:27:48.751Z"
   }
 ]
