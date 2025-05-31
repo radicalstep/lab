@@ -15,7 +15,6 @@
                 <li class="filter-item" data-filter="anime-a">アニメA 「あの夏で待ってる」</li>
                 <li class="filter-item" data-filter="anime-b">アニメB 「ゆるキャン△」</li>
                 <li class="filter-item" data-filter="anime-c">アニメC 「響け！ユーフォニアム」</li>
-                <!-- 他のアニメタイトルをここに追加 -->
             </ul>
         </aside>
 
@@ -33,12 +32,31 @@
     <div id="photo-modal" class="modal">
         <div class="modal-content">
             <span class="modal-close-button">×</span>
-            <div class="modal-image-container">
-                <img id="modal-image" src="" alt="拡大写真">
-                <p id="image-toggle-hint">画像クリックでアニメシーンと切り替え</p>
+
+            <!-- 通常表示と並列表示を切り替えるコンテナ -->
+            <div id="modal-view-container">
+                <!-- 通常の1枚表示エリア -->
+                <div id="single-image-view" class="modal-image-display active-view">
+                    <img id="modal-image" src="" alt="拡大写真">
+                    <p id="image-toggle-hint">画像クリックでアニメシーンと切り替え</p>
+                </div>
+
+                <!-- 左右2枚表示エリア (初期非表示) -->
+                <div id="side-by-side-view" class="modal-image-display">
+                    <div class="sbs-image-wrapper">
+                        <img id="sbs-anime-image" src="" alt="アニメシーン比較">
+                        <p class="sbs-caption">アニメシーン</p>
+                    </div>
+                    <div class="sbs-image-wrapper">
+                        <img id="sbs-real-image" src="" alt="実写写真比較">
+                        <p class="sbs-caption">あなたの写真</p>
+                    </div>
+                </div>
             </div>
-            <button id="show-details-button">詳細を見る</button>
-            <div id="photo-details-area" class="details-area" style="display: none;">
+
+            <button id="toggle-comparison-button">左右で比較する</button>
+
+            <div id="photo-details-area" class="details-area">
                 <h3>写真の詳細</h3>
                 <p id="photo-description">ここに写真のディスクリプションが表示されます。</p>
                 <h4>撮影場所</h4>
