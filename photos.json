@@ -208,5 +208,25 @@
     "description": "【18話】連峰は晴れているか",
     "animeTitleDisplay": "古典部シリーズ",
     "uploadedAt": "2025-05-31T21:21:06.992Z"
+  },
+    {
+    "id": 22,
+    "realSrc": "https://radicalstep.github.io/lab/images/1728146052-PnX5fLjOmakv3STtFpsYuIRU.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/1728145747-JiTAcGdx6WMKap3u1LElOXYo.jpg",
+    "title": "豊橋駅東口の路地",
+    "animeFilterTag": "makeine",
+    "description": "オープニング",
+    "animeTitleDisplay": "負けヒロインが多すぎる！",
+    "uploadedAt": "2025-05-31T21:51:58.795Z"
+  },
+  {
+    "id": 23,
+    "realSrc": "https://radicalstep.github.io/lab/images/o1080068615541409303.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/o1080062015541378039.webp",
+    "title": "ボン千賀",
+    "animeFilterTag": "makeine",
+    "description": "第5話",
+    "animeTitleDisplay": "負けヒロインが多すぎる！",
+    "uploadedAt": "2025-05-31T21:58:35.478Z"
   }
 ]
