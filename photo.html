@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アニメ聖地比較 (デザイン案)</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh; /* 画面全体の高さを確保 */
+        }
+
+        /* 左ペイン */
+        #left-pane {
+            width: 280px; /* 左ペインの幅を固定 */
+            background-color: #e9ecef;
+            padding: 20px;
+            border-right: 1px solid #d1d5db;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #left-pane h2 {
+            font-size: 1.5em;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #6c757d;
+        }
+
+        #thumbnail-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto; /* サムネイルが多くなったらスクロール */
+            flex-grow: 1; /* 残りの高さを埋める */
+        }
+
+        #thumbnail-list li {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            display: flex; /* サムネイルと情報を横並び */
+            align-items: center;
+            gap: 10px;
+        }
+
+        #thumbnail-list li:hover {
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .thumbnail-item-image {
+            width: 60px;
+            height: 40px;
+            object-fit: cover; /* アスペクト比を保ちつつコンテナを埋める */
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+        .thumbnail-item-image.anime {
+            /* アニメ画像のサムネイルに少し枠をつけるなどしても良い */
+        }
+        .thumbnail-item-image.real {
+            /* 実写画像のサムネイル */
+        }
+
+        .thumbnail-item-info {
+            font-size: 0.9em;
+            color: #555;
+        }
+        .thumbnail-item-info .title {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        /* 右ペイン (メインコンテンツ) */
+        #right-pane {
+            flex-grow: 1; /* 残りの幅を全て使う */
+            display: flex;
+            flex-direction: column; /* ヘッダーとメインコンテンツを縦に */
+        }
+
+        header {
+            background-color: #4a90e2; /* アニメっぽい青系 */
+            color: white;
+            padding: 1rem 20px; /* ヘッダーの高さを少し調整 */
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            /* width: 100%; 右ペイン内なので不要 */
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em; /* 少しフォントサイズ調整 */
+        }
+
+        main {
+            /* max-width: 1000px; 右ペイン内で幅は可変なので削除 */
+            margin: 0; /* 右ペイン内なのでマージンは不要 */
+            padding: 20px;
+            background-color: white;
+            /* border-radius: 8px; */ /* 右ペイン全体が白背景なので不要かも */
+            /* box-shadow: 0 0 10px rgba(0,0,0,0.05); */
+            overflow-y: auto; /* コンテンツが多い場合にスクロール */
+            flex-grow: 1; /* ヘッダー以外の残りの高さを埋める */
+        }
+
+        section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #fff; /* 各セクションの背景を明示 */
+        }
+
+        h2 { /* セクション内のh2 */
+            color: #333;
+            border-bottom: 2px solid #4a90e2;
+            padding-bottom: 10px;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .upload-container {
+            display: flex;
+            gap: 20px;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        .upload-box {
+            flex: 1;
+            min-width: 280px;
+            padding: 15px;
+            border: 1px dashed #ccc;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .upload-box h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #555;
+        }
+
+        .upload-box input[type="file"] {
+            display: block;
+            margin: 0 auto 10px auto;
+        }
+
+        .image-preview-container {
+            width: 100%;
+            max-width: 250px; /* プレビュー画像の最大幅を少し調整 */
+            height: 180px; /* プレビュー画像の高さを少し調整 */
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #f9f9f9;
+        }
+
+        .image-preview-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .comparison-container h2 {
+            text-align: center;
+        }
+
+        .comparison-controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .comparison-controls label {
+            margin-right: 10px;
+        }
+
+        .comparison-controls input[type="range"] {
+            width: 200px;
+            vertical-align: middle;
+        }
+
+        .comparison-view {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .image-wrapper {
+            text-align: center;
+            flex: 1;
+            min-width: 280px; /* 少し調整 */
+        }
+
+        .image-wrapper img {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 5px;
+            max-height: 300px; /* 比較画像の最大高さを設定 */
+            object-fit: contain;
+        }
+
+        .image-wrapper p {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .map-container {
+            text-align: center;
+        }
+
+        #map-placeholder {
+            width: 100%;
+            height: 250px; /* 少し調整 */
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #6c757d;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        #exif-info-placeholder {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            min-height: 40px;
+            color: #495057;
+        }
+
+        #streetview-button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s;
+        }
+
+        #streetview-button:hover {
+            background-color: #218838;
+        }
+
+        footer { /* フッターは右ペインの下部に配置 */
+            text-align: center;
+            padding: 15px;
+            background-color: #343a40;
+            color: #f8f9fa;
+            /* margin-top: 40px; flexレイアウトで管理するため削除 */
+        }
+
+        /* レスポンシブ対応調整 */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column; /* スマホでは縦積み */
+            }
+            #left-pane {
+                width: 100%; /* スマホでは左ペインを全幅に */
+                max-height: 300px; /* 高さに制限を設けてスクロール可能に */
+                border-right: none;
+                border-bottom: 1px solid #d1d5db;
+            }
+            #right-pane {
+                width: 100%;
+            }
+            header h1 {
+                font-size: 1.5em;
+            }
+            .upload-container, .comparison-view {
+                flex-direction: column;
+                align-items: center;
+            }
+            .upload-box, .image-wrapper {
+                width: 90%;
+                max-width: 400px;
+            }
+            .image-preview-container {
+                max-width: 200px;
+                height: 150px;
+            }
+            .image-wrapper img {
+                max-height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside id="left-pane">
+            <h2>登録済み写真</h2>
+            <ul id="thumbnail-list">
+                <!-- ダミーのサムネイルアイテム -->
+                <li>
+                    <img src="https://via.placeholder.com/60x40.png?text=アニメ1" alt="アニメシーンサムネイル" class="thumbnail-item-image anime">
+                    <img src="https://via.placeholder.com/60x40.png?text=実写1" alt="実写写真サムネイル" class="thumbnail-item-image real">
+                    <div class="thumbnail-item-info">
+                        <span class="title">あの場所 - シーンA</span>
+                        <span class="date">2023/10/26</span>
+                    </div>
+                </li>
+                <li>
+                    <img src="https://via.placeholder.com/60x40.png?text=アニメ2" alt="アニメシーンサムネイル" class="thumbnail-item-image anime">
+                    <img src="https://via.placeholder.com/60x40.png?text=実写2" alt="実写写真サムネイル" class="thumbnail-item-image real">
+                    <div class="thumbnail-item-info">
+                        <span class="title">通学路の交差点</span>
+                        <span class="date">2023/11/05</span>
+                    </div>
+                </li>
+                <li>
+                    <img src="https://via.placeholder.com/60x40.png?text=アニメ3" alt="アニメシーンサムネイル" class="thumbnail-item-image anime">
+                    <img src="https://via.placeholder.com/60x40.png?text=実写3" alt="実写写真サムネイル" class="thumbnail-item-image real">
+                    <div class="thumbnail-item-info">
+                        <span class="title">駅前のカフェ</span>
+                        <span class="date">2023/12/10</span>
+                    </div>
+                </li>
+                <!-- ここにJavaScriptでサムネイルが追加される予定 -->
+            </ul>
+        </aside>
+
+        <div id="right-pane">
+            <header>
+                <h1>アニメ聖地巡礼 フォトコンペア</h1>
+            </header>
+
+            <main>
+                <section class="upload-container">
+                    <h2>写真を選択して比較</h2>
+                    <div class="upload-box">
+                        <h3>アニメのシーン</h3>
+                        <input type="file" id="anime-file-input" accept="image/*">
+                        <div class="image-preview-container">
+                            <img id="anime-image-preview" src="https://via.placeholder.com/250x180.png?text=アニメシーン" alt="アニメシーンプレビュー">
+                        </div>
+                    </div>
+                    <div class="upload-box">
+                        <h3>あなたの聖地写真</h3>
+                        <input type="file" id="real-file-input" accept="image/*">
+                        <div class="image-preview-container">
+                            <img id="real-image-preview" src="https://via.placeholder.com/250x180.png?text=実写写真" alt="実写写真プレビュー">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="comparison-container">
+                    <h2>見比べてみよう！</h2>
+                    <div class="comparison-controls">
+                        <label for="opacity-slider">重ね合わせ調整 (見た目だけ): </label>
+                        <input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="0.5">
+                    </div>
+                    <div class="comparison-view">
+                        <div class="image-wrapper">
+                            <img id="compare-anime-img" src="https://via.placeholder.com/400x300.png?text=アニメシーン" alt="比較用アニメシーン">
+                            <p>アニメシーン</p>
+                        </div>
+                        <div class="image-wrapper">
+                            <img id="compare-real-img" src="https://via.placeholder.com/400x300.png?text=あなたの写真" alt="比較用実写写真">
+                            <p>あなたの写真</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="map-container">
+                    <h2>撮影場所の情報 (Exifから取得予定)</h2>
+                    <div id="map-placeholder">
+                        ここに地図が表示されます（ダミー）
+                    </div>
+                    <div id="exif-info-placeholder">
+                        Exif情報: (ここに緯度経度などが表示される予定)
+                    </div>
+                    <button id="streetview-button">この場所のストリートビューを見る (ダミー)</button>
+                </section>
+            </main>
+
+            <footer>
+                <p>© 2023 聖地巡礼アプリ (デザイン案)</p>
+            </footer>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
