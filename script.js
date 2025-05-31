@@ -1,85 +1,43 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const photoGalleryContainer = document.getElementById('photo-gallery-container');
+    // 左ペイン
     const filterList = document.getElementById('filter-list');
-    const modal = document.getElementById('photo-modal');
-    const modalCloseButton = document.querySelector('.modal-close-button');
 
-    // モーダル内の要素
-    const singleImageView = document.getElementById('single-image-view');
-    const modalImage = document.getElementById('modal-image');
-    const sideBySideView = document.getElementById('side-by-side-view');
-    const sbsAnimeImage = document.getElementById('sbs-anime-image');
-    const sbsRealImage = document.getElementById('sbs-real-image');
-    const toggleComparisonButton = document.getElementById('toggle-comparison-button');
+    // 右ペイン
+    const rightPaneHeaderTitle = document.getElementById('right-pane-header-title');
+    const closeDetailViewButton = document.getElementById('close-detail-view-button');
+    const photoGalleryContainer = document.getElementById('photo-gallery-container');
+    const detailViewContainer = document.getElementById('detail-view-container');
 
-    const photoDescription = document.getElementById('photo-description');
-    const mapPlaceholderModal = document.getElementById('map-placeholder-modal');
-    const streetviewLinkModal = document.getElementById('streetview-link-modal');
+    // 詳細ビュー：画像ペイン
+    const detailSingleImageView = document.getElementById('detail-single-image-view');
+    const detailModalImage = document.getElementById('detail-modal-image');
+    const detailSideBySideView = document.getElementById('detail-side-by-side-view');
+    const detailSbsAnimeImage = document.getElementById('detail-sbs-anime-image');
+    const detailSbsRealImage = document.getElementById('detail-sbs-real-image');
+    const detailToggleComparisonButton = document.getElementById('detail-toggle-comparison-button');
+
+    // 詳細ビュー：情報ペイン
+    const detailTitle = document.getElementById('detail-title');
+    const detailAnimeTitleDisplay = document.getElementById('detail-anime-title-display');
+    const detailPhotoDescription = document.getElementById('detail-photo-description');
+    const detailMapPlaceholder = document.getElementById('detail-map-placeholder');
+    const detailStreetviewLink = document.getElementById('detail-streetview-link');
+
 
     // ダミーの写真データ
     const dummyPhotos = [
-        {
-            id: 1,
-            realSrc: 'https://via.placeholder.com/800x600.png?text=聖地A実写',
-            animeSrc: 'https://via.placeholder.com/800x600.png?text=聖地Aアニメ',
-            thumbnailSrc: 'https://via.placeholder.com/200x150.png?text=聖地A',
-            title: '旧碓氷峠見晴台',
-            animeTitle: 'anime-a',
-            description: 'アニメAの第3話に登場した見晴台。素晴らしい景色が広がります。',
-            lat: 36.395, lng: 138.693,
-            animeTitleDisplay: 'あの夏で待ってる'
-        },
-        {
-            id: 2,
-            realSrc: 'https://via.placeholder.com/800x600.png?text=聖地B実写',
-            animeSrc: 'https://via.placeholder.com/800x600.png?text=聖地Bアニメ',
-            thumbnailSrc: 'https://via.placeholder.com/200x150.png?text=聖地B',
-            title: '本栖湖キャンプ場',
-            animeTitle: 'anime-b',
-            description: 'アニメBのメインビジュアルにもなったキャンプ場。富士山が綺麗。',
-            lat: 35.470, lng: 138.588,
-            animeTitleDisplay: 'ゆるキャン△'
-        },
-        {
-            id: 3,
-            realSrc: 'https://via.placeholder.com/800x600.png?text=聖地C実写',
-            animeSrc: 'https://via.placeholder.com/800x600.png?text=聖地Cアニメ',
-            thumbnailSrc: 'https://via.placeholder.com/200x150.png?text=聖地C',
-            title: '宇治橋',
-            animeTitle: 'anime-c',
-            description: 'アニメCで何度も登場する宇治の象徴的な橋です。',
-            lat: 34.890, lng: 135.807,
-            animeTitleDisplay: '響け！ユーフォニアム'
-        },
-        {
-            id: 4,
-            realSrc: 'https://via.placeholder.com/800x600.png?text=聖地D実写',
-            animeSrc: 'https://via.placeholder.com/800x600.png?text=聖地Dアニメ',
-            thumbnailSrc: 'https://via.placeholder.com/200x150.png?text=聖地D',
-            title: '小諸駅前',
-            animeTitle: 'anime-a',
-            description: 'アニメAのキャラクターたちがよく利用していた駅です。',
-            lat: 36.326, lng: 138.421,
-            animeTitleDisplay: 'あの夏で待ってる'
-        },
-        {
-            id: 5,
-            realSrc: 'https://via.placeholder.com/800x600.png?text=聖地E実写',
-            animeSrc: 'https://via.placeholder.com/800x600.png?text=聖地Eアニメ',
-            thumbnailSrc: 'https://via.placeholder.com/200x150.png?text=聖地E',
-            title: '高ボッチ高原',
-            animeTitle: 'anime-b',
-            description: 'アニメBでリンちゃんが訪れた絶景スポット。夜景も有名。',
-            lat: 36.151, lng: 138.036,
-            animeTitleDisplay: 'ゆるキャン△'
-        }
+        { id: 1, realSrc: 'https://via.placeholder.com/1000x750/A8D8EA/000?text=聖地A実写', animeSrc: 'https://via.placeholder.com/1000x750/FFD3B4/000?text=聖地Aアニメ', thumbnailSrc: 'https://via.placeholder.com/200x150/A8D8EA/000?text=聖地A', title: '旧碓氷峠見晴台', animeTitle: 'anime-a', description: 'アニメAの第3話に登場した見晴台。素晴らしい景色が広がります。頂上からの眺めはまさに絶景で、多くのファンが訪れる聖地の一つです。特に夕暮れ時は感動的。', lat: 36.395, lng: 138.693, animeTitleDisplay: 'あの夏で待ってる' },
+        { id: 2, realSrc: 'https://via.placeholder.com/1000x750/C1E1C1/000?text=聖地B実写', animeSrc: 'https://via.placeholder.com/1000x750/F7C8E0/000?text=聖地Bアニメ', thumbnailSrc: 'https://via.placeholder.com/200x150/C1E1C1/000?text=聖地B', title: '本栖湖キャンプ場', animeTitle: 'anime-b', description: 'アニメBのメインビジュアルにもなったキャンプ場。富士山が綺麗に見えることで有名で、冬キャンプのシーンは特に印象的でした。湖畔でのんびり過ごす時間は最高。', lat: 35.470, lng: 138.588, animeTitleDisplay: 'ゆるキャン△' },
+        { id: 3, realSrc: 'https://via.placeholder.com/1000x750/E6E6FA/000?text=聖地C実写', animeSrc: 'https://via.placeholder.com/1000x750/FFFACD/000?text=聖地Cアニメ', thumbnailSrc: 'https://via.placeholder.com/200x150/E6E6FA/000?text=聖地C', title: '宇治橋', animeTitle: 'anime-c', description: 'アニメCで何度も登場する宇治の象徴的な橋です。登場人物たちの心情が描かれる重要なシーンで背景として使われることが多く、物語の雰囲気を高めています。', lat: 34.890, lng: 135.807, animeTitleDisplay: '響け！ユーフォニアム' },
+        { id: 4, realSrc: 'https://via.placeholder.com/1000x750/BDB5D5/000?text=聖地D実写', animeSrc: 'https://via.placeholder.com/1000x750/F0E68C/000?text=聖地Dアニメ', thumbnailSrc: 'https://via.placeholder.com/200x150/BDB5D5/000?text=聖地D', title: '小諸駅前', animeTitle: 'anime-a', description: 'アニメAのキャラクターたちがよく利用していた駅の周辺。待ち合わせ場所や日常風景として描かれています。駅舎のデザインも特徴的。', lat: 36.326, lng: 138.421, animeTitleDisplay: 'あの夏で待ってる' },
+        { id: 5, realSrc: 'https://via.placeholder.com/1000x750/FFB6C1/000?text=聖地E実写', animeSrc: 'https://via.placeholder.com/1000x750/ADD8E6/000?text=聖地Eアニメ', thumbnailSrc: 'https://via.placeholder.com/200x150/FFB6C1/000?text=聖地E', title: '高ボッチ高原', animeTitle: 'anime-b', description: 'アニメBでリンちゃんが訪れた絶景スポット。夜景も有名ですが、昼間の景色も素晴らしい。作中ではここでスープを飲むシーンがありましたね。', lat: 36.151, lng: 138.036, animeTitleDisplay: 'ゆるキャン△' }
     ];
 
     let currentPhotoData = null;
-    let isRealImageDisplayedInSingleView = true; // 通常表示で実写が表示されているか
-    let isSideBySideActive = false; // 左右比較表示がアクティブか
+    let isRealImageDisplayedInSingleView = true; // ★これがtrueなら実写が先
+    let isDetailSideBySideActive = false;
 
-    // 写真タイルをギャラリーに表示する関数
+    // 写真タイルをギャラリーに表示
     function displayPhotos(photosToDisplay) {
         photoGalleryContainer.innerHTML = '';
         photosToDisplay.forEach(photo => {
@@ -101,90 +59,96 @@ document.addEventListener('DOMContentLoaded', () => {
             tile.appendChild(img);
             tile.appendChild(infoDiv);
             photoGalleryContainer.appendChild(tile);
-            tile.addEventListener('click', () => openModal(photo.id));
+            tile.addEventListener('click', () => openDetailView(photo.id));
         });
     }
 
-    // モーダルを開く関数
-    function openModal(photoId) {
+    // 詳細ビューを開く
+    function openDetailView(photoId) {
         currentPhotoData = dummyPhotos.find(p => p.id === parseInt(photoId));
         if (!currentPhotoData) return;
 
-        // 初期表示は通常(1枚)表示
-        isRealImageDisplayedInSingleView = true;
-        modalImage.src = currentPhotoData.realSrc;
-        sbsAnimeImage.src = currentPhotoData.animeSrc;
-        sbsRealImage.src = currentPhotoData.realSrc;
+        photoGalleryContainer.classList.remove('active-content');
+        detailViewContainer.classList.add('active-content');
+        rightPaneHeaderTitle.textContent = currentPhotoData.title;
+        closeDetailViewButton.style.display = 'inline-block';
 
-        switchToSingleView(); // 通常表示をアクティブに
+        // 画像設定
+        isRealImageDisplayedInSingleView = true; // ★常に実写を最初に表示
+        detailModalImage.src = currentPhotoData.realSrc; // ★実写のURLをセット
+        detailSbsAnimeImage.src = currentPhotoData.animeSrc;
+        detailSbsRealImage.src = currentPhotoData.realSrc;
+        switchToDetailSingleView();
 
-        // 詳細情報セット
-        photoDescription.textContent = currentPhotoData.description;
-        mapPlaceholderModal.innerHTML = `
+        // 情報設定
+        detailTitle.textContent = currentPhotoData.title;
+        detailAnimeTitleDisplay.textContent = `アニメ: ${currentPhotoData.animeTitleDisplay}`;
+        detailPhotoDescription.textContent = currentPhotoData.description;
+        detailMapPlaceholder.innerHTML = `
             ダミー地図 (Leafletなどで描画予定)<br>
             緯度: ${currentPhotoData.lat}, 経度: ${currentPhotoData.lng}
         `;
         const streetViewUrl = `https://www.google.com/maps?q&layer=c&cbll=${currentPhotoData.lat},${currentPhotoData.lng}`;
-        streetviewLinkModal.href = streetViewUrl;
-        streetviewLinkModal.style.display = 'inline-block';
-        streetviewLinkModal.textContent = `ストリートビューで「${currentPhotoData.title}」の場所を見る`;
-
-        modal.style.display = 'block';
+        detailStreetviewLink.href = streetViewUrl;
+        detailStreetviewLink.style.display = 'inline-block';
+        detailStreetviewLink.innerHTML = `<i class="fas fa-street-view"></i> 「${currentPhotoData.title}」をストリートビューで見る`;
     }
 
-    // 通常表示に切り替え
-    function switchToSingleView() {
-        singleImageView.classList.add('active-view');
-        sideBySideView.classList.remove('active-view');
-        toggleComparisonButton.textContent = '左右で比較する';
-        isSideBySideActive = false;
-    }
-
-    // 左右比較表示に切り替え
-    function switchToSideBySideView() {
-        singleImageView.classList.remove('active-view');
-        sideBySideView.classList.add('active-view');
-        toggleComparisonButton.textContent = '1枚表示に戻す';
-        isSideBySideActive = true;
-    }
-
-    // モーダルを閉じる
-    modalCloseButton.onclick = () => {
-        modal.style.display = 'none';
+    // 詳細ビューを閉じてギャラリーに戻る
+    function closeDetailView() {
+        detailViewContainer.classList.remove('active-content');
+        photoGalleryContainer.classList.add('active-content');
+        rightPaneHeaderTitle.textContent = '聖地写真ギャラリー';
+        closeDetailViewButton.style.display = 'none';
         currentPhotoData = null;
     }
-    window.onclick = (event) => {
-        if (event.target == modal) {
-            modal.style.display = 'none';
-            currentPhotoData = null;
-        }
+    closeDetailViewButton.addEventListener('click', closeDetailView);
+
+
+    // 詳細ビュー：通常表示に切り替え
+    function switchToDetailSingleView() {
+        detailSingleImageView.classList.add('active-detail-image-display');
+        detailSideBySideView.classList.remove('active-detail-image-display');
+        detailToggleComparisonButton.textContent = '左右で比較する';
+        isDetailSideBySideActive = false;
     }
 
-    // 通常表示の画像クリックで実写/アニメシーン切り替え
-    modalImage.addEventListener('click', () => {
-        if (!currentPhotoData || isSideBySideActive) return; // 比較表示中は無効
+    // 詳細ビュー：左右比較表示に切り替え
+    function switchToDetailSideBySideView() {
+        detailSingleImageView.classList.remove('active-detail-image-display');
+        detailSideBySideView.classList.add('active-detail-image-display');
+        detailToggleComparisonButton.textContent = '1枚表示に戻す';
+        isDetailSideBySideActive = true;
+    }
+
+    // 詳細ビュー：通常表示の画像クリックで実写/アニメシーン切り替え
+    detailModalImage.addEventListener('click', () => {
+        if (!currentPhotoData || isDetailSideBySideActive) return;
         if (isRealImageDisplayedInSingleView) {
-            modalImage.src = currentPhotoData.animeSrc;
+            detailModalImage.src = currentPhotoData.animeSrc;
         } else {
-            modalImage.src = currentPhotoData.realSrc;
+            detailModalImage.src = currentPhotoData.realSrc;
         }
         isRealImageDisplayedInSingleView = !isRealImageDisplayedInSingleView;
     });
 
-    // 「左右で比較する / 1枚表示に戻す」ボタンの処理
-    toggleComparisonButton.addEventListener('click', () => {
+    // 詳細ビュー：「左右で比較する / 1枚表示に戻す」ボタンの処理
+    detailToggleComparisonButton.addEventListener('click', () => {
         if (!currentPhotoData) return;
-        if (isSideBySideActive) {
-            switchToSingleView();
+        if (isDetailSideBySideActive) {
+            switchToDetailSingleView();
         } else {
-            switchToSideBySideView();
+            switchToDetailSideBySideView();
         }
     });
-
 
     // 左ペインのフィルター処理
     filterList.addEventListener('click', (event) => {
         if (event.target.tagName === 'LI') {
+            if (detailViewContainer.classList.contains('active-content')) {
+                closeDetailView();
+            }
+
             document.querySelectorAll('#filter-list .filter-item').forEach(item => item.classList.remove('active'));
             event.target.classList.add('active');
 
@@ -200,5 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 初期表示 (すべての写真を表示)
+    photoGalleryContainer.classList.add('active-content');
     displayPhotos(dummyPhotos);
 });
