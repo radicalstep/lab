@@ -5,31 +5,37 @@ body {
     color: #333;
     line-height: 1.6;
     overflow-x: hidden;
+    display: flex;
+    justify-content: center;
 }
 
 .app-container {
     display: flex;
     min-height: 100vh;
+    width: 100%;
+    max-width: 1600px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
 }
 
 /* 左ペイン */
 #left-pane {
-    width: 280px;
-    background-color: #e9ecef;
+    width: 260px;
+    background-color: #f8f9fa;
     padding: 20px;
-    border-right: 1px solid #d1d5db;
+    border-right: 1px solid #e0e0e0;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
 }
 
 #left-pane h2 {
-    font-size: 1.5em;
+    font-size: 1.4em;
     color: #333;
     margin-top: 0;
     margin-bottom: 15px;
     padding-bottom: 10px;
-    border-bottom: 2px solid #6c757d;
+    border-bottom: 1px solid #ccc;
 }
 
 #filter-list {
@@ -41,22 +47,22 @@ body {
 }
 
 .filter-item {
-    padding: 10px 15px;
-    margin-bottom: 8px;
+    padding: 10px 12px;
+    margin-bottom: 5px;
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
-    font-size: 0.95em;
+    font-size: 0.9em;
 }
 
 .filter-item:hover {
-    background-color: #d4dadf;
+    background-color: #e9ecef;
 }
 
 .filter-item.active {
     background-color: #007bff;
     color: white;
-    font-weight: bold;
+    font-weight: 500;
 }
 
 /* 右ペイン (メインコンテンツ) */
@@ -65,279 +71,370 @@ body {
     display: flex;
     flex-direction: column;
     background-color: #ffffff;
+    overflow: hidden;
 }
 
 #right-pane header {
-    background-color: #343a40;
-    color: white;
-    padding: 1rem 20px;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background-color: #fff;
+    color: #333;
+    padding: 0.8rem 20px;
+    text-align: left;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 10;
 }
 
-#right-pane header h1 {
+#right-pane-header-title {
     margin: 0;
-    font-size: 1.8em;
+    font-size: 1.5em;
 }
 
+#close-detail-view-button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s;
+}
+#close-detail-view-button:hover {
+    background-color: #5a6268;
+}
+
+/* コンテンツ表示エリア共通スタイル */
+.content-view {
+    display: none;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+.content-view.active-content {
+    display: flex;
+}
+
+/* タイルギャラリーコンテナ */
 #photo-gallery-container {
     padding: 20px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 15px;
-    overflow-y: auto;
-    flex-grow: 1;
+}
+#photo-gallery-container.active-content {
+    display: grid;
 }
 
+
 .photo-tile {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 5px;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    height: 200px; /* ★タイル自体の高さを固定 (例: 200px) */
-    display: flex; /* 画像と情報を配置するために追加 */
-    flex-direction: column; /* 画像と情報を縦に並べる */
+    transition: box-shadow 0.2s;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+.photo-tile:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .photo-tile img {
     width: 100%;
-    height: 150px; /* ★画像コンテナの高さを設定 (タイルの高さより少し小さく) */
-    object-fit: contain; /* ★contain に変更して全体を表示 */
+    height: 140px;
+    object-fit: contain;
     display: block;
-    background-color: #eee; /* 画像の余白が目立たないように背景色を設定しても良い */
+    background-color: #f0f0f0;
 }
-
-.photo-tile:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
 
 .photo-tile-info {
-    padding: 10px;
-    font-size: 0.85em;
-    color: #555;
+    padding: 8px;
+    font-size: 0.8em;
+    color: #444;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
 }
 
 .photo-tile-info .title {
-    font-weight: bold;
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     display: block;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
 }
 .photo-tile-info .anime-title {
     font-size: 0.9em;
-    color: #777;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* モーダルウィンドウ */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.7);
-    padding-top: 30px;
+/* 詳細ビューコンテナ */
+#detail-view-container {
+    flex-direction: row;
 }
-
-.modal-content {
-    background-color: #fff;
-    margin: auto;
-    padding: 25px;
-    border: 1px solid #888;
-    width: 85%; /* 少し幅を広げる */
-    max-width: 900px; /* 最大幅も広げる */
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    position: relative;
-    text-align: center;
-}
-
-.modal-close-button {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    position: absolute;
-    top: 10px;
-    right: 20px;
-}
-
-.modal-close-button:hover,
-.modal-close-button:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-/* モーダル内の表示エリア共通スタイル */
-.modal-image-display {
-    display: none; /* 初期は非表示、active-viewクラスで表示 */
-    margin-bottom: 15px;
-}
-.modal-image-display.active-view {
-    display: block;
-}
-
-/* 通常の1枚表示エリア */
-#single-image-view #modal-image {
-    max-width: 100%;
-    max-height: 60vh; /* 詳細エリアがあるので少し高さを抑える */
-    display: block;
-    margin: 0 auto 5px auto;
-    border: 2px solid #eee;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-#image-toggle-hint {
-    font-size: 0.8em;
-    color: #777;
-    margin-top: 0px;
-}
-
-/* 左右2枚表示エリア */
-#side-by-side-view {
-    display: none; /* JSで active-view を制御 */
-    flex-direction: row; /* 横並びにするために .active-view で display:flex にする */
-    justify-content: space-around;
-    align-items: flex-start;
-    gap: 15px;
-}
-#side-by-side-view.active-view { /* JSでクラスを付与した際にflexにする */
+#detail-view-container.active-content {
     display: flex;
 }
 
 
-.sbs-image-wrapper {
-    flex: 1; /* 均等に幅を分ける */
-    min-width: 0; /* flexアイテムの縮小を許可 */
+#detail-view-image-pane {
+    flex: 0 0 70%; /* ★左側(画像)の幅を70%に拡大 */
+    background-color: #2c2c2c;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    position: relative;
+}
+
+#detail-view-info-pane {
+    flex: 0 0 30%; /* ★右側(情報)の幅を30%に (以前はflex: 1) */
+    background-color: #fff;
+    padding: 25px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    border-left: 1px solid #e0e0e0;
+}
+
+/* 詳細ビュー内の画像表示エリア */
+.detail-image-display {
+    display: none;
+    width: 100%;
+    text-align: center;
+}
+.detail-image-display.active-detail-image-display {
+    display: block;
+}
+
+#detail-single-image-view #detail-modal-image {
+    max-width: 100%;
+    max-height: 75vh;
+    display: block;
+    margin: 0 auto 5px auto;
+    border: 3px solid #444;
+    border-radius: 4px;
+    cursor: pointer;
+    object-fit: contain;
+}
+
+#detail-image-toggle-hint {
+    font-size: 0.85em;
+    color: #ccc;
+    margin-top: 5px;
+}
+
+#detail-side-by-side-view {
+    display: none;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+}
+#detail-side-by-side-view.active-detail-image-display {
+    display: flex;
+}
+
+.detail-sbs-image-wrapper {
+    flex: 1;
+    min-width: 0;
     text-align: center;
 }
 
-.sbs-image-wrapper img {
+.detail-sbs-image-wrapper img {
     max-width: 100%;
-    max-height: 55vh; /* 左右比較時の高さ */
-    border: 1px solid #ddd;
+    max-height: 70vh;
+    border: 2px solid #555;
     border-radius: 4px;
     margin-bottom: 5px;
-    object-fit: contain; /* アスペクト比を保って表示 */
+    object-fit: contain;
 }
 
-.sbs-caption {
+.detail-sbs-caption {
     font-size: 0.9em;
-    color: #555;
+    color: #ddd;
     margin-top: 0;
 }
 
-/* 比較切り替えボタン */
-#toggle-comparison-button {
-    background-color: #6c757d;
-    color: white;
+#detail-toggle-comparison-button {
+    background-color: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.5);
     padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
+    border-radius: 20px;
     cursor: pointer;
-    font-size: 0.9em;
-    margin-bottom: 20px;
-    transition: background-color 0.2s;
+    font-size: 0.85em;
+    margin-top: 20px;
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+#detail-toggle-comparison-button:hover {
+    background-color: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.7);
 }
 
-#toggle-comparison-button:hover {
-    background-color: #5a6268;
-}
 
-
-/* 詳細情報エリア */
-.details-area {
-    text-align: left;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 5px;
+/* 詳細ビュー右側の情報エリア */
+#detail-view-info-pane h2, #detail-view-info-pane h3 {
     margin-top: 0;
-}
-
-.details-area h3, .details-area h4 {
-    margin-top: 0;
-    margin-bottom: 10px;
     color: #333;
 }
-.details-area h4 {
-    font-size: 1.1em;
-    border-top: 1px solid #ddd;
-    padding-top: 10px;
-    margin-top: 15px;
+#detail-view-info-pane h2 {
+    font-size: 1.6em;
+    margin-bottom: 5px;
+}
+#detail-anime-title-display {
+    font-size: 1em;
+    color: #555;
+    margin-bottom: 20px;
+    font-weight: 500;
 }
 
-#map-placeholder-modal {
+#detail-view-info-pane h3 {
+    font-size: 1.1em;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+    color: #444;
+}
+#detail-view-info-pane h3 i {
+    margin-right: 8px;
+    color: #007bff;
+}
+
+#detail-photo-description {
+    font-size: 0.95em;
+    line-height: 1.7;
+    margin-bottom: 25px;
+    color: #555;
+}
+
+#detail-map-placeholder {
     width: 100%;
-    height: 200px;
-    background-color: #e0e0e0;
+    height: 220px;
+    background-color: #e9ecef;
     display: flex;
     justify-content: center;
     align-items: center;
-    color: #666;
+    color: #6c757d;
     font-size: 1em;
     border-radius: 4px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ced4da;
 }
 
-#streetview-link-modal {
+#detail-streetview-link {
     display: inline-block;
-    margin-top: 10px;
+    margin-top: 0;
     color: #007bff;
     text-decoration: none;
+    font-size: 0.95em;
+    padding: 8px 12px;
+    background-color: #e7f3ff;
+    border-radius: 4px;
+    transition: background-color 0.2s;
 }
-#streetview-link-modal:hover {
-    text-decoration: underline;
+#detail-streetview-link:hover {
+    background-color: #d0e6ff;
+    text-decoration: none;
+}
+#detail-streetview-link i {
+    margin-right: 6px;
 }
 
+
 /* レスポンシブ対応 */
+@media (max-width: 1024px) {
+    #detail-view-image-pane {
+        flex: 0 0 60%; /* ★タブレットでは60%に */
+    }
+    #detail-view-info-pane {
+        flex: 0 0 40%; /* ★タブレットでは40%に */
+    }
+}
+
 @media (max-width: 768px) {
     .app-container {
         flex-direction: column;
     }
     #left-pane {
         width: 100%;
-        max-height: 200px;
+        max-height: 180px;
         border-right: none;
         border-bottom: 1px solid #d1d5db;
     }
-    #right-pane header h1 {
-        font-size: 1.5em;
+    #right-pane header {
+        padding: 0.7rem 15px;
     }
+    #right-pane-header-title {
+        font-size: 1.3em;
+    }
+    #close-detail-view-button {
+        font-size: 0.8em;
+        padding: 6px 10px;
+    }
+
     #photo-gallery-container {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         padding: 15px;
+    }
+    .photo-tile {
+        height: 170px;
     }
     .photo-tile img {
-        /* height: 120px; ← autoにしたので削除 */
+        height: 110px;
     }
-    .modal-content {
-        width: 95%; /* スマホでは幅をより広く */
+
+    #detail-view-container.active-content {
+        flex-direction: column;
+    }
+    #detail-view-image-pane {
+        flex: 0 0 auto;
+        height: 60vh;
         padding: 15px;
     }
-    #single-image-view #modal-image {
-        max-height: 40vh; /* スマホでは高さをさらに調整 */
+    #detail-view-info-pane {
+        flex-grow: 1;
+        border-left: none;
+        border-top: 1px solid #e0e0e0;
+        padding: 20px;
     }
-    #side-by-side-view {
-        flex-direction: column; /* スマホでは縦積みに */
+
+    #detail-single-image-view #detail-modal-image {
+        max-height: 45vh;
+    }
+    #detail-side-by-side-view {
+        flex-direction: column;
         align-items: center;
+        gap: 10px;
     }
-    .sbs-image-wrapper img {
-        max-height: 35vh; /* スマホでの比較表示時の高さ */
+    .detail-sbs-image-wrapper img {
+        max-height: 25vh;
     }
-    .sbs-image-wrapper {
-        margin-bottom: 10px; /* 縦積み時のマージン */
+    #detail-toggle-comparison-button {
+        font-size: 0.8em;
+        margin-top: 15px;
+        position: static;
+        transform: none;
+        margin-bottom: 10px;
     }
+    #detail-view-info-pane h2 { font-size: 1.4em; }
+    #detail-anime-title-display { font-size: 0.95em; margin-bottom: 15px; }
+    #detail-map-placeholder { height: 180px; }
 }
