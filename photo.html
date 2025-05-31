@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>アニメ聖地ギャラリー (新デザイン案)</title>
+    <title>アニメ聖地ギャラリー (Google風UI案)</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,54 +20,58 @@
 
         <main id="right-pane">
             <header>
-                <h1>聖地写真ギャラリー</h1>
+                <h1 id="right-pane-header-title">聖地写真ギャラリー</h1>
+                <button id="close-detail-view-button" style="display: none;">× ギャラリーに戻る</button>
             </header>
-            <div id="photo-gallery-container">
+
+            <!-- タイルギャラリーコンテナ -->
+            <div id="photo-gallery-container" class="active-content">
                 <!-- JavaScriptで写真タイルがここに挿入されます -->
+            </div>
+
+            <!-- 詳細ビューコンテナ (初期非表示) -->
+            <div id="detail-view-container" class="content-view">
+                <div id="detail-view-image-pane">
+                    <!-- 通常の1枚表示エリア -->
+                    <div id="detail-single-image-view" class="detail-image-display active-detail-image-display">
+                        <img id="detail-modal-image" src="" alt="拡大写真">
+                        <p id="detail-image-toggle-hint">画像クリックでアニメシーンと切り替え</p>
+                    </div>
+                    <!-- 左右2枚表示エリア (初期非表示) -->
+                    <div id="detail-side-by-side-view" class="detail-image-display">
+                        <div class="detail-sbs-image-wrapper">
+                            <img id="detail-sbs-anime-image" src="" alt="アニメシーン比較">
+                            <p class="detail-sbs-caption">アニメシーン</p>
+                        </div>
+                        <div class="detail-sbs-image-wrapper">
+                            <img id="detail-sbs-real-image" src="" alt="実写写真比較">
+                            <p class="detail-sbs-caption">あなたの写真</p>
+                        </div>
+                    </div>
+                    <button id="detail-toggle-comparison-button">左右で比較する</button>
+                </div>
+                <div id="detail-view-info-pane">
+                    <h2 id="detail-title">写真のタイトル</h2>
+                    <p id="detail-anime-title-display">アニメ名</p>
+                    <div id="detail-photo-description-area">
+                        <h3><i class="fas fa-info-circle"></i> 説明</h3>
+                        <p id="detail-photo-description">ここに写真のディスクリプションが表示されます。</p>
+                    </div>
+                    <div id="detail-map-area">
+                        <h3><i class="fas fa-map-marker-alt"></i> 撮影場所</h3>
+                        <div id="detail-map-placeholder">
+                            地図がここに表示されます (ダミー)
+                        </div>
+                        <a id="detail-streetview-link" href="#" target="_blank" style="display: none;">
+                            <i class="fas fa-street-view"></i> ストリートビューで見る
+                        </a>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
-
-    <!-- モーダルウィンドウ (写真拡大表示用) -->
-    <div id="photo-modal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close-button">×</span>
-
-            <!-- 通常表示と並列表示を切り替えるコンテナ -->
-            <div id="modal-view-container">
-                <!-- 通常の1枚表示エリア -->
-                <div id="single-image-view" class="modal-image-display active-view">
-                    <img id="modal-image" src="" alt="拡大写真">
-                    <p id="image-toggle-hint">画像クリックでアニメシーンと切り替え</p>
-                </div>
-
-                <!-- 左右2枚表示エリア (初期非表示) -->
-                <div id="side-by-side-view" class="modal-image-display">
-                    <div class="sbs-image-wrapper">
-                        <img id="sbs-anime-image" src="" alt="アニメシーン比較">
-                        <p class="sbs-caption">アニメシーン</p>
-                    </div>
-                    <div class="sbs-image-wrapper">
-                        <img id="sbs-real-image" src="" alt="実写写真比較">
-                        <p class="sbs-caption">あなたの写真</p>
-                    </div>
-                </div>
-            </div>
-
-            <button id="toggle-comparison-button">左右で比較する</button>
-
-            <div id="photo-details-area" class="details-area">
-                <h3>写真の詳細</h3>
-                <p id="photo-description">ここに写真のディスクリプションが表示されます。</p>
-                <h4>撮影場所</h4>
-                <div id="map-placeholder-modal">
-                    地図がここに表示されます (ダミー)
-                </div>
-                <a id="streetview-link-modal" href="#" target="_blank" style="display: none;">ストリートビューで見る</a>
-            </div>
-        </div>
-    </div>
-
+    <!-- Font Awesome (アイコン用 - 任意) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="script.js"></script>
 </body>
 </html>
