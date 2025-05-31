@@ -69,14 +69,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initializeGallery() {
-        // ... (変更なし) ...
         photoGalleryContainer.classList.add('active-content');
         detailViewContainer.classList.remove('active-content');
         displayPhotos(allPhotosData);
     }
 
     function displayPhotos(photosToDisplay) {
-        // ... (変更なし) ...
         photoGalleryContainer.innerHTML = '';
         currentFilteredPhotosForDetailView = [...photosToDisplay];
         photosToDisplay.forEach(photo => {
@@ -227,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(detailMap);
         L.control.attribution({prefix: '<a href="https://leafletjs.com" target="_blank">Leaflet</a> | © <a href="http://osm.org/copyright" target="_blank">OSM</a>'}).addTo(detailMap);
         currentMapMarker = L.marker([lat, lon]).addTo(detailMap).bindPopup(title || '撮影場所');
-        detailMap.setView([lat, lon], 15);
+        detailMap.setView([lat, lon], 12);
         detailMap.invalidateSize();
         currentMapMarker.openPopup();
     }
