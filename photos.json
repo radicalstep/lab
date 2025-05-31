@@ -158,5 +158,55 @@
     "description": "第八話",
     "animeTitleDisplay": "ゆるキャン△",
     "uploadedAt": "2025-05-31T20:58:54.901Z"
+  },
+  {
+    "id": 17,
+    "realSrc": "https://radicalstep.github.io/lab/images/19058360.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/0f785437.png",
+    "title": "セブンイレブン岐阜明徳町店",
+    "animeFilterTag": "sho-shimin",
+    "description": "「春限定いちごタルト事件」第１話",
+    "animeTitleDisplay": "小市民シリーズ",
+    "uploadedAt": "2025-05-31T21:10:10.929Z"
+  },
+  {
+    "id": 18,
+    "realSrc": "https://radicalstep.github.io/lab/images/0ea2797f.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/eb9e0369.png",
+    "title": "柳ヶ瀬本通",
+    "animeFilterTag": "sho-shimin",
+    "description": "第２話",
+    "animeTitleDisplay": "小市民シリーズ",
+    "uploadedAt": "2025-05-31T21:11:03.262Z"
+  },
+  {
+    "id": 19,
+    "realSrc": "https://radicalstep.github.io/lab/images/bf3ab29d.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/23e0b869.png",
+    "title": "長良川河川敷",
+    "animeFilterTag": "sho-shimin",
+    "description": "第2話",
+    "animeTitleDisplay": "小市民シリーズ",
+    "uploadedAt": "2025-05-31T21:15:38.852Z"
+  },
+  {
+    "id": 20,
+    "realSrc": "https://radicalstep.github.io/lab/images/141_d001_l.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/141_1_l.jpg",
+    "title": "宮川朝市通り",
+    "animeFilterTag": "hyouka",
+    "description": "オープニング",
+    "animeTitleDisplay": "古典部シリーズ",
+    "uploadedAt": "2025-05-31T21:19:26.865Z"
+  },
+  {
+    "id": 21,
+    "realSrc": "https://radicalstep.github.io/lab/images/146_d001_l.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/146_1_l.jpg",
+    "title": "神山市図書館",
+    "animeFilterTag": "hyouka",
+    "description": "【18話】連峰は晴れているか",
+    "animeTitleDisplay": "古典部シリーズ",
+    "uploadedAt": "2025-05-31T21:21:06.992Z"
   }
 ]
