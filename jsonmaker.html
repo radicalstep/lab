@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSONデータ登録エディタ</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            gap: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        #editorFormContainer {
+            width: 450px;
+            flex-shrink: 0; /* 幅が縮まないように */
+        }
+        #outputContainer {
+            flex-grow: 1;
+            min-width: 300px; /* 最小幅 */
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select { /* input[type="url"] はもう使用していないため削除 */
+            width: calc(100% - 12px);
+            padding: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.9em;
+        }
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-right: 10px;
+            margin-bottom: 5px; /* ボタンが複数行になる場合の間隔 */
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button[type="button"] {
+            background-color: #6c757d;
+        }
+        button[type="button"]:hover {
+            background-color: #5a6268;
+        }
+        #jsonOutput {
+            width: 100%;
+            min-height: 300px;
+            max-height: calc(100vh - 100px); /* 画面の高さに応じて調整 */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            box-sizing: border-box;
+            white-space: pre-wrap;
+            word-break: break-all;
+            background-color: #f9f9f9;
+            font-family: monospace;
+            font-size: 0.85em;
+            overflow-y: auto;
+        }
+        h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            font-size: 1.4em;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .note {
+            font-size: 0.8em;
+            color: #777;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+        /* レスポンシブ対応（簡易） */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            #editorFormContainer {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            #outputContainer {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="editorFormContainer" class="container">
+        <h2>写真データ登録</h2>
+        <form id="photoDataForm">
+            <div class="form-group">
+                <label for="id">ID:</label>
+                <input type="number" id="id" name="id" min="1" required>
+                <p class="note">写真ごとにユニークな数値を指定してください。</p>
+            </div>
+            <div class="form-group">
+                <label for="title">タイトル:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            <div class="form-group">
+                <label for="realSrc">実写画像のパス/URL:</label>
+                <input type="text" id="realSrc" name="realSrc" placeholder="例: images/real.jpg または https://..." required>
+            </div>
+            <div class="form-group">
+                <label for="animeSrc">アニメシーン画像のパス/URL:</label>
+                <input type="text" id="animeSrc" name="animeSrc" placeholder="例: images/anime.jpg または https://..." required>
+            </div>
+            <div class="form-group">
+                <label for="description">説明:</label>
+                <textarea id="description" name="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="animeFilterTag">アニメフィルタータグ:</label>
+                <input type="text" id="animeFilterTag" name="animeFilterTag" placeholder="例: anime-a, yurucamp (英数字とハイフン推奨)" required>
+                <p class="note">フィルター処理に使われる内部的なIDです。</p>
+            </div>
+            <div class="form-group">
+                <label for="animeTitleDisplay">アニメ表示名:</label>
+                <input type="text" id="animeTitleDisplay" name="animeTitleDisplay" placeholder="例: ゆるキャン△ SEASON3" required>
+                <p class="note">フィルターリストや詳細表示で使われるアニメの正式名称です。</p>
+            </div>
+
+            <button type="submit">データを追加</button>
+            <button type="button" id="clearFormButton">フォームをクリア</button>
+            <button type="button" id="copyJsonButton">JSONをコピー</button>
+        </form>
+    </div>
+
+    <div id="outputContainer" class="container">
+        <h2>生成されたJSONデータ</h2>
+        <div id="jsonOutput">[]</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('photoDataForm');
+            const jsonOutputDiv = document.getElementById('jsonOutput');
+            const clearFormButton = document.getElementById('clearFormButton');
+            const copyJsonButton = document.getElementById('copyJsonButton');
+            const idInput = document.getElementById('id');
+            const animeFilterTagInput = document.getElementById('animeFilterTag');
+            const animeTitleDisplayInput = document.getElementById('animeTitleDisplay');
+
+            let registeredData = [];
+
+            // 初期表示
+            updateJsonOutput();
+            setNextSuggestedId();
+            idInput.focus(); // 初回ロード時にID入力欄にフォーカス
+
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const formData = new FormData(form);
+                const newId = parseInt(formData.get('id'), 10);
+
+                // IDが入力されているか、数値であるかの基本的なチェック
+                if (isNaN(newId) || formData.get('id').trim() === '') {
+                    alert('エラー: IDは必須入力で、数値である必要があります。');
+                    idInput.focus();
+                    return;
+                }
+
+                if (registeredData.some(entry => entry.id === newId)) {
+                    alert('エラー: 指定されたID ' + newId + ' は既に使用されています。別のIDを入力してください。');
+                    idInput.focus();
+                    return;
+                }
+
+                // アニメフィルタータグとアニメ表示名の値を保持
+                const animeFilterTagValue = animeFilterTagInput.value;
+                const animeTitleDisplayValue = animeTitleDisplayInput.value;
+
+                const photoEntry = {
+                    id: newId,
+                    realSrc: formData.get('realSrc'),
+                    animeSrc: formData.get('animeSrc'),
+                    title: formData.get('title'),
+                    animeFilterTag: formData.get('animeFilterTag'), // FormDataから最新の値を取得
+                    description: formData.get('description'),
+                    animeTitleDisplay: formData.get('animeTitleDisplay'), // FormDataから最新の値を取得
+                    uploadedAt: new Date().toISOString()
+                };
+
+                registeredData.push(photoEntry);
+                registeredData.sort((a, b) => a.id - b.id); // ID順にソートして表示
+                updateJsonOutput();
+                form.reset(); // フォームの他のフィールドをリセット
+
+                // 保持していた値を再設定
+                animeFilterTagInput.value = animeFilterTagValue;
+                animeTitleDisplayInput.value = animeTitleDisplayValue;
+
+                setNextSuggestedId();
+                idInput.focus();
+            });
+
+            clearFormButton.addEventListener('click', () => {
+                form.reset();
+                setNextSuggestedId();
+                idInput.focus();
+            });
+
+            copyJsonButton.addEventListener('click', async () => {
+                if (registeredData.length === 0) {
+                    alert('コピーするデータがありません。');
+                    return;
+                }
+                try {
+                    await navigator.clipboard.writeText(jsonOutputDiv.textContent);
+                    alert('JSONデータがクリップボードにコピーされました！');
+                } catch (err) {
+                    console.error('クリップボードへのコピーに失敗しました: ', err);
+                    alert('クリップボードへのコピーに失敗しました。コンソールを確認してください。');
+                }
+            });
+
+            function updateJsonOutput() {
+                jsonOutputDiv.textContent = JSON.stringify(registeredData, null, 2);
+            }
+
+            function setNextSuggestedId() {
+                if (registeredData.length === 0) {
+                    idInput.value = 1;
+                } else {
+                    // 登録されているIDの中で最大のものを探し、それに1を加える
+                    const maxId = Math.max(...registeredData.map(entry => entry.id).filter(id => typeof id === 'number' && !isNaN(id)), 0);
+                    idInput.value = maxId + 1;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
