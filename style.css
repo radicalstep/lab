@@ -147,9 +147,9 @@ body {
 .photo-tile img {
     width: 100%;
     height: 140px;
-    object-fit: contain;
+    object-fit: contain; /* 画像が歪まないように contain を推奨 */
     display: block;
-    background-color: #f0f0f0;
+    background-color: #f0f0f0; /* 画像の背景色 */
 }
 
 .photo-tile-info {
@@ -189,7 +189,7 @@ body {
 
 
 #detail-view-image-pane {
-    flex: 0 0 70%; /* ★左側(画像)の幅を70%に拡大 */
+    flex: 0 0 70%;
     background-color: #2c2c2c;
     padding: 20px;
     box-sizing: border-box;
@@ -202,7 +202,7 @@ body {
 }
 
 #detail-view-info-pane {
-    flex: 0 0 30%; /* ★右側(情報)の幅を30%に (以前はflex: 1) */
+    flex: 0 0 30%;
     background-color: #fff;
     padding: 25px;
     box-sizing: border-box;
@@ -318,30 +318,35 @@ body {
     color: #007bff;
 }
 
+#detail-photo-info-area {
+    margin-bottom: 25px;
+}
+
 #detail-photo-description {
     font-size: 0.95em;
     line-height: 1.7;
-    margin-bottom: 25px;
     color: #555;
 }
 
-#detail-map-placeholder {
-    width: 100%;
-    height: 220px;
-    background-color: #e9ecef;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #6c757d;
-    font-size: 1em;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    border: 1px solid #ced4da;
+.photo-meta-info {
+    font-size: 0.85em;
+    color: #777;
+    margin-top: 10px;
+}
+.photo-meta-info i {
+    margin-right: 5px;
+    color: #888;
+}
+
+
+#detail-map-element {
+    /* height, width, margin-bottom, border-radius, border はHTMLのインラインスタイルで指定 */
+    background-color: #e9ecef; /* 地図読み込み中の背景 */
 }
 
 #detail-streetview-link {
     display: inline-block;
-    margin-top: 0;
+    margin-top: 0; /* 地図との間隔は detail-map-element の margin-bottom で調整 */
     color: #007bff;
     text-decoration: none;
     font-size: 0.95em;
@@ -362,10 +367,10 @@ body {
 /* レスポンシブ対応 */
 @media (max-width: 1024px) {
     #detail-view-image-pane {
-        flex: 0 0 60%; /* ★タブレットでは60%に */
+        flex: 0 0 60%;
     }
     #detail-view-info-pane {
-        flex: 0 0 40%; /* ★タブレットでは40%に */
+        flex: 0 0 40%;
     }
 }
 
@@ -405,19 +410,20 @@ body {
         flex-direction: column;
     }
     #detail-view-image-pane {
-        flex: 0 0 auto;
-        height: 60vh;
+        flex: 0 0 auto; /* 幅を自動に */
+        height: auto; /* 高さを内容に合わせる */
+        min-height: 50vh; /* 最低限の高さを確保 */
         padding: 15px;
     }
     #detail-view-info-pane {
-        flex-grow: 1;
+        flex-grow: 1; /* 残りの高さを取る */
         border-left: none;
         border-top: 1px solid #e0e0e0;
         padding: 20px;
     }
 
     #detail-single-image-view #detail-modal-image {
-        max-height: 45vh;
+        max-height: 45vh; /* スマホでは画像表示域の高さを調整 */
     }
     #detail-side-by-side-view {
         flex-direction: column;
@@ -425,16 +431,16 @@ body {
         gap: 10px;
     }
     .detail-sbs-image-wrapper img {
-        max-height: 25vh;
+        max-height: 35vh;
     }
     #detail-toggle-comparison-button {
         font-size: 0.8em;
         margin-top: 15px;
-        position: static;
+        position: static; /* スマホでは通常配置 */
         transform: none;
         margin-bottom: 10px;
     }
     #detail-view-info-pane h2 { font-size: 1.4em; }
     #detail-anime-title-display { font-size: 0.95em; margin-bottom: 15px; }
-    #detail-map-placeholder { height: 180px; }
+    #detail-map-element { height: 200px; } /* スマホでの地図の高さ */
 }
