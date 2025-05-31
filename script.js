@@ -1,134 +1,192 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 要素の取得
-    const animeFileInput = document.getElementById('anime-file-input');
-    const realFileInput = document.getElementById('real-file-input');
-    const animeImagePreview = document.getElementById('anime-image-preview');
-    const realImagePreview = document.getElementById('real-image-preview');
-    const compareAnimeImg = document.getElementById('compare-anime-img');
-    const compareRealImg = document.getElementById('compare-real-img');
-    const opacitySlider = document.getElementById('opacity-slider');
-    const mapPlaceholder = document.getElementById('map-placeholder');
-    const exifInfoPlaceholder = document.getElementById('exif-info-placeholder');
-    const streetviewButton = document.getElementById('streetview-button');
+    const photoGalleryContainer = document.getElementById('photo-gallery-container');
+    const filterList = document.getElementById('filter-list');
+    const modal = document.getElementById('photo-modal');
+    const modalImage = document.getElementById('modal-image');
+    const modalCloseButton = document.querySelector('.modal-close-button');
+    const showDetailsButton = document.getElementById('show-details-button');
+    const photoDetailsArea = document.getElementById('photo-details-area');
+    const photoDescription = document.getElementById('photo-description');
+    const mapPlaceholderModal = document.getElementById('map-placeholder-modal');
+    const streetviewLinkModal = document.getElementById('streetview-link-modal');
 
-    // アニメシーン画像のファイル選択時の処理
-    animeFileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                animeImagePreview.src = e.target.result;
-                compareAnimeImg.src = e.target.result; // 比較ビューにも反映
-            }
-            reader.readAsDataURL(file);
-            alert('アニメシーン画像が選択されました (プレビューに表示)');
-        } else {
-            // ファイルが選択されなかった場合やキャンセルされた場合
-            animeImagePreview.src = 'https://via.placeholder.com/300x200.png?text=アニメシーン';
-            compareAnimeImg.src = 'https://via.placeholder.com/400x300.png?text=アニメシーン';
+    // ダミーの写真データ
+    const dummyPhotos = [
+        {
+            id: 1,
+            realSrc: 'https://via.placeholder.com/600x400.png?text=聖地A実写',
+            animeSrc: 'https://via.placeholder.com/600x400.png?text=聖地Aアニメ',
+            thumbnailSrc: 'https://via.placeholder.com/200x150.png?text=聖地A',
+            title: '旧碓氷峠見晴台',
+            animeTitle: 'anime-a', // アニメAのID
+            description: 'アニメAの第3話に登場した見晴台。素晴らしい景色が広がります。',
+            lat: 36.395, lng: 138.693, // ダミー座標 (軽井沢付近)
+            animeTitleDisplay: 'あの夏で待ってる'
+        },
+        {
+            id: 2,
+            realSrc: 'https://via.placeholder.com/600x400.png?text=聖地B実写',
+            animeSrc: 'https://via.placeholder.com/600x400.png?text=聖地Bアニメ',
+            thumbnailSrc: 'https://via.placeholder.com/200x150.png?text=聖地B',
+            title: '本栖湖キャンプ場',
+            animeTitle: 'anime-b', // アニメBのID
+            description: 'アニメBのメインビジュアルにもなったキャンプ場。富士山が綺麗。',
+            lat: 35.470, lng: 138.588, // ダミー座標 (本栖湖付近)
+            animeTitleDisplay: 'ゆるキャン△'
+        },
+        {
+            id: 3,
+            realSrc: 'https://via.placeholder.com/600x400.png?text=聖地C実写',
+            animeSrc: 'https://via.placeholder.com/600x400.png?text=聖地Cアニメ',
+            thumbnailSrc: 'https://via.placeholder.com/200x150.png?text=聖地C',
+            title: '宇治橋',
+            animeTitle: 'anime-c', // アニメCのID
+            description: 'アニメCで何度も登場する宇治の象徴的な橋です。',
+            lat: 34.890, lng: 135.807, // ダミー座標 (宇治橋付近)
+            animeTitleDisplay: '響け！ユーフォニアム'
+        },
+        {
+            id: 4,
+            realSrc: 'https://via.placeholder.com/600x400.png?text=聖地D実写',
+            animeSrc: 'https://via.placeholder.com/600x400.png?text=聖地Dアニメ',
+            thumbnailSrc: 'https://via.placeholder.com/200x150.png?text=聖地D',
+            title: '小諸駅前',
+            animeTitle: 'anime-a',
+            description: 'アニメAのキャラクターたちがよく利用していた駅です。',
+            lat: 36.326, lng: 138.421, // ダミー座標 (小諸駅付近)
+            animeTitleDisplay: 'あの夏で待ってる'
+        },
+        {
+            id: 5,
+            realSrc: 'https://via.placeholder.com/600x400.png?text=聖地E実写',
+            animeSrc: 'https://via.placeholder.com/600x400.png?text=聖地Eアニメ',
+            thumbnailSrc: 'https://via.placeholder.com/200x150.png?text=聖地E',
+            title: '高ボッチ高原',
+            animeTitle: 'anime-b',
+            description: 'アニメBでリンちゃんが訪れた絶景スポット。夜景も有名。',
+            lat: 36.151, lng: 138.036, // ダミー座標 (高ボッチ高原付近)
+            animeTitleDisplay: 'ゆるキャン△'
         }
-    });
+    ];
 
-    // 実写写真のファイル選択時の処理
-    realFileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                realImagePreview.src = e.target.result;
-                compareRealImg.src = e.target.result; // 比較ビューにも反映
+    let currentPhotoData = null; // モーダルで表示中の写真データ
+    let isRealImageDisplayed = true; // モーダルで実写が表示されているか
 
-                // Exif情報取得と地図表示はダミー
-                exifInfoPlaceholder.textContent = 'Exif情報: 緯度 35.681236, 経度 139.767125 (ダミー: 東京駅)';
-                mapPlaceholder.innerHTML = `
-                    <p><strong>ダミーの地図</strong></p>
-                    <p>(実際の地図API連携は未実装です)</p>
-                    <img src="https://via.placeholder.com/300x150.png?text=Map+Placeholder" alt="地図プレースホルダー" style="width:80%; opacity:0.7;">
-                `;
-                alert('実写写真が選択されました (プレビューとダミーの地図情報が表示されます)');
-            }
-            reader.readAsDataURL(file);
-        } else {
-            realImagePreview.src = 'https://via.placeholder.com/300x200.png?text=実写写真';
-            compareRealImg.src = 'https://via.placeholder.com/400x300.png?text=あなたの写真';
-            exifInfoPlaceholder.textContent = 'Exif情報: (ここに緯度経度などが表示される予定)';
-            mapPlaceholder.textContent = 'ここに地図が表示されます（ダミー）';
-        }
-    });
+    // 写真タイルをギャラリーに表示する関数
+    function displayPhotos(photosToDisplay) {
+        photoGalleryContainer.innerHTML = ''; // コンテナをクリア
+        photosToDisplay.forEach(photo => {
+            const tile = document.createElement('div');
+            tile.classList.add('photo-tile');
+            tile.dataset.photoId = photo.id; // カスタムデータ属性でIDを保持
 
-    // スライダーのダミー動作
-    opacitySlider.addEventListener('input', (event) => {
-        const value = event.target.value;
-        // 実際の重ね合わせ処理はCSSやCanvasで行いますが、ここではアラートのみ
-        // 例: compareRealImg.style.opacity = value;
-        //     compareAnimeImg.style.opacity = 1 - value;
-        alert(`スライダーの値: ${value} (実際の画像重ね合わせ処理は未実装です)`);
-        console.log('スライダー値:', value);
-    });
+            const img = document.createElement('img');
+            img.src = photo.thumbnailSrc;
+            img.alt = photo.title;
 
-    // 実写写真のファイル選択時の処理
-    realFileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                realImagePreview.src = e.target.result;
-                compareRealImg.src = e.target.result; // 比較ビューにも反映
+            const infoDiv = document.createElement('div');
+            infoDiv.classList.add('photo-tile-info');
+            infoDiv.innerHTML = `
+                <span class="title">${photo.title}</span>
+                <span class="anime-title">${photo.animeTitleDisplay}</span>
+            `;
 
-                // Exif情報取得と地図表示はダミー
-                exifInfoPlaceholder.textContent = 'Exif情報: 緯度 35.681236, 経度 139.767125 (ダミー: 東京駅)';
-                mapPlaceholder.innerHTML = `
-                    <p><strong>ダミーの地図</strong></p>
-                    <p>(実際の地図API連携は未実装です)</p>
-                    <img src="https://via.placeholder.com/300x150.png?text=Map+Placeholder" alt="地図プレースホルダー" style="width:80%; opacity:0.7;">
-                `;
-                alert('実写写真が選択されました (プレビューとダミーの地図情報が表示されます)');
+            tile.appendChild(img);
+            tile.appendChild(infoDiv);
+            photoGalleryContainer.appendChild(tile);
 
-                // ★ 左ペインにサムネイルが追加されたことを示すダミーのアラート
-                const thumbnailList = document.getElementById('thumbnail-list');
-                // ダミーのサムネイル要素を作成して追加する例（実際にはもっと情報が必要）
-                const newThumbnail = document.createElement('li');
-                newThumbnail.innerHTML = `
-                    <img src="${e.target.result}" alt="実写サムネイル" class="thumbnail-item-image real">
-                    <img src="${animeImagePreview.src}" alt="アニメサムネイル" class="thumbnail-item-image anime">
-                    <div class="thumbnail-item-info">
-                        <span class="title">新しい聖地 (仮)</span>
-                        <span class="date">${new Date().toLocaleDateString()}</span>
-                    </div>
-                `;
-                // クリック時のダミー動作
-                newThumbnail.addEventListener('click', () => {
-                    alert('この聖地ペアの詳細を表示します (ダミー動作)');
-                    // ここで右ペインの内容を選択された情報で更新する処理が入る
-                });
-                thumbnailList.appendChild(newThumbnail);
-                alert('左ペインに新しい写真のサムネイルが追加されました（ダミー表示）。');
-
-            }
-            reader.readAsDataURL(file);
-        } else {
-            // ... (既存のファイル未選択時の処理) ...
-        }
-    });
-
-    // 初期表示時のサムネイルにもクリックイベントを追加 (ダミー)
-    const initialThumbnails = document.querySelectorAll('#thumbnail-list li');
-    initialThumbnails.forEach(thumb => {
-        thumb.addEventListener('click', () => {
-            alert('この聖地ペアの詳細を表示します (ダミー動作)');
-            // ここで右ペインの内容を選択された情報で更新する処理が入る
+            // タイルクリックでモーダル表示
+            tile.addEventListener('click', () => openModal(photo.id));
         });
+    }
+
+    // モーダルを開く関数
+    function openModal(photoId) {
+        currentPhotoData = dummyPhotos.find(p => p.id === parseInt(photoId));
+        if (!currentPhotoData) return;
+
+        isRealImageDisplayed = true; // 初期は実写を表示
+        modalImage.src = currentPhotoData.realSrc;
+        modal.style.display = 'block';
+        photoDetailsArea.style.display = 'none'; // 詳細エリアは初期非表示
+        showDetailsButton.textContent = '詳細を見る';
+
+        // アラートでお知らせ (開発用)
+        alert(`写真ID: ${photoId} の拡大表示\n画像クリックでアニメシーンと切り替わります。`);
+    }
+
+    // モーダルを閉じる
+    modalCloseButton.onclick = () => {
+        modal.style.display = 'none';
+        currentPhotoData = null;
+    }
+    window.onclick = (event) => { // モーダル外クリックでも閉じる
+        if (event.target == modal) {
+            modal.style.display = 'none';
+            currentPhotoData = null;
+        }
+    }
+
+    // モーダル内の画像クリックで実写/アニメシーン切り替え
+    modalImage.addEventListener('click', () => {
+        if (!currentPhotoData) return;
+        if (isRealImageDisplayed) {
+            modalImage.src = currentPhotoData.animeSrc;
+            //alert('アニメシーン画像に切り替えました。');
+        } else {
+            modalImage.src = currentPhotoData.realSrc;
+            //alert('実写画像に切り替えました。');
+        }
+        isRealImageDisplayed = !isRealImageDisplayed;
     });
 
-    // ストリートビューボタンのダミー動作
-    streetviewButton.addEventListener('click', () => {
-        const dummyLat = 35.681236;
-        const dummyLng = 139.767125;
-        alert(`ストリートビューを開きます (ダミー動作)\n緯度: ${dummyLat}, 経度: ${dummyLng} の場所を想定しています。\n実際の機能では、写真のExif情報から取得した位置で開きます。`);
-        // 実際に開く場合の例 (コメントアウト)
-        // window.open(`https://www.google.com/maps?q&layer=c&cbll=${dummyLat},${dummyLng}`, '_blank');
+    // 「詳細を見る/閉じる」ボタンの処理
+    showDetailsButton.addEventListener('click', () => {
+        if (!currentPhotoData) return;
+
+        if (photoDetailsArea.style.display === 'none') {
+            photoDescription.textContent = currentPhotoData.description;
+            mapPlaceholderModal.innerHTML = `
+                ダミー地図 (Leafletなどで描画予定)<br>
+                緯度: ${currentPhotoData.lat}, 経度: ${currentPhotoData.lng}
+            `;
+            // ダミーのストリートビューリンク
+            const streetViewUrl = `https://www.google.com/maps?q&layer=c&cbll=${currentPhotoData.lat},${currentPhotoData.lng}`;
+            streetviewLinkModal.href = streetViewUrl;
+            streetviewLinkModal.style.display = 'inline-block';
+            streetviewLinkModal.textContent = `ストリートビューで「${currentPhotoData.title}」の場所を見る (ダミー)`;
+
+
+            photoDetailsArea.style.display = 'block';
+            showDetailsButton.textContent = '詳細を閉じる';
+            alert('詳細情報を表示しました。');
+        } else {
+            photoDetailsArea.style.display = 'none';
+            showDetailsButton.textContent = '詳細を見る';
+            alert('詳細情報を閉じました。');
+        }
     });
 
-    // 初期表示時のメッセージ
-   // alert('アニメ聖地比較アプリのデザイン案へようこそ！\nこれは見た目の確認用です。実際の機能はまだ実装されていません。\nファイルを選択すると、プレビューが更新されます。');
+    // 左ペインのフィルター処理
+    filterList.addEventListener('click', (event) => {
+        if (event.target.tagName === 'LI') {
+            // アクティブクラスの切り替え
+            document.querySelectorAll('#filter-list .filter-item').forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const filterType = event.target.dataset.filter;
+            let filteredPhotos;
+            if (filterType === 'all') {
+                filteredPhotos = dummyPhotos;
+            } else {
+                filteredPhotos = dummyPhotos.filter(photo => photo.animeTitle === filterType);
+            }
+            displayPhotos(filteredPhotos);
+            //alert(`フィルター「${event.target.textContent}」が選択されました。`);
+        }
+    });
+
+    // 初期表示 (すべての写真を表示)
+    displayPhotos(dummyPhotos);
+    //alert('アニメ聖地ギャラリーへようこそ！\nこれは見た目の確認用モックアップです。\n左のフィルターや写真タイルをクリックしてみてください。');
 });
