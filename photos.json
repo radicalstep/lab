@@ -1,13 +1,13 @@
 [
   {
     "id": 1,
-    "realSrc": "https://radicalstep.github.io/lab/images/02r.jpg",
-    "animeSrc": "https://radicalstep.github.io/lab/images/02c.jpg",
-    "title": "本栖湖キャンプ場",
-    "animeFilterTag": "anime-a",
-    "description": "第91話アプトの廃線さんぽ道。歴史を感じることができます",
+    "realSrc": "https://radicalstep.github.io/lab/images/yuru06.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/yrc06.jpg",
+    "title": "浩庵",
+    "animeFilterTag": "yurucamp",
+    "description": "第一話",
     "animeTitleDisplay": "ゆるキャン△",
-    "uploadedAt": "2023-02-20T14:30:00Z"
+    "uploadedAt": "2025-05-31T21:02:42.814Z"
   },
     {
     "id": 2,
@@ -108,5 +108,55 @@
     "description": "１期13話",
     "animeTitleDisplay": "マリア様がみてる",
     "uploadedAt": "2025-05-31T20:27:48.751Z"
+  },
+  {
+    "id": 12,
+    "realSrc": "https://radicalstep.github.io/lab/images/yuru08_c033bg123.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/yrc08_c033bg123.jpg",
+    "title": "下部薬局前",
+    "animeFilterTag": "yurucamp",
+    "description": "第八話",
+    "animeTitleDisplay": "ゆるキャン△",
+    "uploadedAt": "2025-05-31T20:41:48.792Z"
+  },
+  {
+    "id": 13,
+    "realSrc": "https://radicalstep.github.io/lab/images/yuru08_c259_260.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/yrc08_c259_260.jpg",
+    "title": "下部薬局前",
+    "animeFilterTag": "yurucamp",
+    "description": "第八話",
+    "animeTitleDisplay": "ゆるキャン△",
+    "uploadedAt": "2025-05-31T20:43:30.268Z"
+  },
+  {
+    "id": 14,
+    "realSrc": "https://radicalstep.github.io/lab/images/yuru08_c56.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/yrc08_c056.jpg",
+    "title": "JR甲斐常葉駅",
+    "animeFilterTag": "yurucamp",
+    "description": "第八話",
+    "animeTitleDisplay": "ゆるキャン△",
+    "uploadedAt": "2025-05-31T20:52:42.681Z"
+  },
+  {
+    "id": 15,
+    "realSrc": "https://radicalstep.github.io/lab/images/yuru08_c144.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/yrc08_c144.jpg",
+    "title": "栄昇堂",
+    "animeFilterTag": "yurucamp",
+    "description": "第八話",
+    "animeTitleDisplay": "ゆるキャン△",
+    "uploadedAt": "2025-05-31T20:55:19.445Z"
+  },
+  {
+    "id": 16,
+    "realSrc": "https://radicalstep.github.io/lab/images/yuru08_c240.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/yrc08_c240.jpg",
+    "title": "富士川前",
+    "animeFilterTag": "yurucamp",
+    "description": "第八話",
+    "animeTitleDisplay": "ゆるキャン△",
+    "uploadedAt": "2025-05-31T20:58:54.901Z"
   }
 ]
