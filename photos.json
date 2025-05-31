@@ -1,12 +1,12 @@
 [
   {
-    "id": 1,
+    "id": 100,
     "realSrc": "https://radicalstep.github.io/lab/02r.jpg",
     "animeSrc": "https://radicalstep.github.io/lab/02c.jpg",
-    "title": "本栖湖キャンプ場",
-    "animeFilterTag": "anime-a",
-    "description": "第91話アプトの廃線さんぽ道。歴史を感じることができます",
-    "animeTitleDisplay": "ゆるキャン△",
-    "uploadedAt": "2023-02-20T14:30:00Z"
-  } //
+    "title": "テストデータ",
+    "animeFilterTag": "test",
+    "description": "これはテスト用のデータです。",
+    "animeTitleDisplay": "テストアニメ",
+    "uploadedAt": "2023-01-01T00:00:00Z"
+  }
 ]
