@@ -1,10 +1,10 @@
 body {
     font-family: 'Arial', sans-serif;
     margin: 0;
-    background-color: #f4f7f6; /* 少し柔らかい背景色 */
+    background-color: #f4f7f6;
     color: #333;
     line-height: 1.6;
-    overflow-x: hidden; /* 横スクロールバーを防止 */
+    overflow-x: hidden;
 }
 
 .app-container {
@@ -54,7 +54,7 @@ body {
 }
 
 .filter-item.active {
-    background-color: #007bff; /* アクティブなフィルターの色 */
+    background-color: #007bff;
     color: white;
     font-weight: bold;
 }
@@ -68,7 +68,7 @@ body {
 }
 
 #right-pane header {
-    background-color: #343a40; /* ダーク系のヘッダー */
+    background-color: #343a40;
     color: white;
     padding: 1rem 20px;
     text-align: center;
@@ -83,12 +83,11 @@ body {
 #photo-gallery-container {
     padding: 20px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* レスポンシブなタイル表示 */
-    gap: 15px; /* タイル間の隙間 */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
     overflow-y: auto;
     flex-grow: 1;
 }
-
 
 .photo-tile {
     background-color: #f8f9fa;
@@ -136,19 +135,18 @@ body {
     color: #777;
 }
 
-
 /* モーダルウィンドウ */
 .modal {
-    display: none; /* 初期状態では非表示 */
+    display: none;
     position: fixed;
     z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto; /* スクロール可能に */
-    background-color: rgba(0, 0, 0, 0.7); /* 背景を少し暗く */
-    padding-top: 30px; /* 上部に少し余白 */
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding-top: 30px;
 }
 
 .modal-content {
@@ -156,8 +154,8 @@ body {
     margin: auto;
     padding: 25px;
     border: 1px solid #888;
-    width: 80%;
-    max-width: 700px; /* モーダルの最大幅 */
+    width: 85%; /* 少し幅を広げる */
+    max-width: 900px; /* 最大幅も広げる */
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     position: relative;
@@ -181,50 +179,92 @@ body {
     cursor: pointer;
 }
 
-.modal-image-container {
-    margin-bottom: 20px;
-    position: relative; /* ヒントの配置のため */
+/* モーダル内の表示エリア共通スタイル */
+.modal-image-display {
+    display: none; /* 初期は非表示、active-viewクラスで表示 */
+    margin-bottom: 15px;
+}
+.modal-image-display.active-view {
+    display: block;
 }
 
-#modal-image {
+/* 通常の1枚表示エリア */
+#single-image-view #modal-image {
     max-width: 100%;
-    max-height: 70vh; /* 画面高さに応じて最大高さを調整 */
+    max-height: 60vh; /* 詳細エリアがあるので少し高さを抑える */
     display: block;
-    margin: 0 auto;
+    margin: 0 auto 5px auto;
     border: 2px solid #eee;
     border-radius: 4px;
-    cursor: pointer; /* 画像クリックで切り替えのため */
+    cursor: pointer;
 }
 
 #image-toggle-hint {
     font-size: 0.8em;
     color: #777;
-    margin-top: 5px;
+    margin-top: 0px;
 }
 
-#show-details-button {
-    background-color: #007bff;
+/* 左右2枚表示エリア */
+#side-by-side-view {
+    display: none; /* JSで active-view を制御 */
+    flex-direction: row; /* 横並びにするために .active-view で display:flex にする */
+    justify-content: space-around;
+    align-items: flex-start;
+    gap: 15px;
+}
+#side-by-side-view.active-view { /* JSでクラスを付与した際にflexにする */
+    display: flex;
+}
+
+
+.sbs-image-wrapper {
+    flex: 1; /* 均等に幅を分ける */
+    min-width: 0; /* flexアイテムの縮小を許可 */
+    text-align: center;
+}
+
+.sbs-image-wrapper img {
+    max-width: 100%;
+    max-height: 55vh; /* 左右比較時の高さ */
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    object-fit: contain; /* アスペクト比を保って表示 */
+}
+
+.sbs-caption {
+    font-size: 0.9em;
+    color: #555;
+    margin-top: 0;
+}
+
+/* 比較切り替えボタン */
+#toggle-comparison-button {
+    background-color: #6c757d;
     color: white;
-    padding: 10px 20px;
+    padding: 8px 15px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 1em;
-    margin-bottom: 15px;
+    font-size: 0.9em;
+    margin-bottom: 20px;
     transition: background-color 0.2s;
 }
 
-#show-details-button:hover {
-    background-color: #0056b3;
+#toggle-comparison-button:hover {
+    background-color: #5a6268;
 }
 
+
+/* 詳細情報エリア */
 .details-area {
     text-align: left;
     padding: 15px;
     background-color: #f8f9fa;
     border: 1px solid #e9ecef;
     border-radius: 5px;
-    margin-top: 15px;
+    margin-top: 0;
 }
 
 .details-area h3, .details-area h4 {
@@ -238,7 +278,6 @@ body {
     padding-top: 10px;
     margin-top: 15px;
 }
-
 
 #map-placeholder-modal {
     width: 100%;
@@ -263,7 +302,6 @@ body {
     text-decoration: underline;
 }
 
-
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
     .app-container {
@@ -271,7 +309,7 @@ body {
     }
     #left-pane {
         width: 100%;
-        max-height: 200px; /* スマホではフィルターエリアの高さを制限 */
+        max-height: 200px;
         border-right: none;
         border-bottom: 1px solid #d1d5db;
     }
@@ -279,17 +317,27 @@ body {
         font-size: 1.5em;
     }
     #photo-gallery-container {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* スマホでのタイルサイズ調整 */
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         padding: 15px;
     }
     .photo-tile img {
-        height: 120px;
+        /* height: 120px; ← autoにしたので削除 */
     }
     .modal-content {
-        width: 90%;
+        width: 95%; /* スマホでは幅をより広く */
         padding: 15px;
     }
-    #modal-image {
-        max-height: 60vh;
+    #single-image-view #modal-image {
+        max-height: 40vh; /* スマホでは高さをさらに調整 */
+    }
+    #side-by-side-view {
+        flex-direction: column; /* スマホでは縦積みに */
+        align-items: center;
+    }
+    .sbs-image-wrapper img {
+        max-height: 35vh; /* スマホでの比較表示時の高さ */
+    }
+    .sbs-image-wrapper {
+        margin-bottom: 10px; /* 縦積み時のマージン */
     }
 }
