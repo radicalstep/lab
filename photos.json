@@ -1,8 +1,8 @@
 [
   {
     "id": 1,
-    "realSrc": "https://radicalstep.github.io/lab/02r.jpg",
-    "animeSrc": "https://radicalstep.github.io/lab/02c.jpg",
+    "realSrc": "./02r.jpg",
+    "animeSrc": "./02c.jpg",
     "title": "本栖湖キャンプ場",
     "animeFilterTag": "anime-a",
     "description": "第91話アプトの廃線さんぽ道。歴史を感じることができます",
