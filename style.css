@@ -1,0 +1,295 @@
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    background-color: #f4f7f6; /* 少し柔らかい背景色 */
+    color: #333;
+    line-height: 1.6;
+    overflow-x: hidden; /* 横スクロールバーを防止 */
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* 左ペイン */
+#left-pane {
+    width: 280px;
+    background-color: #e9ecef;
+    padding: 20px;
+    border-right: 1px solid #d1d5db;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+#left-pane h2 {
+    font-size: 1.5em;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #6c757d;
+}
+
+#filter-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.filter-item {
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    font-size: 0.95em;
+}
+
+.filter-item:hover {
+    background-color: #d4dadf;
+}
+
+.filter-item.active {
+    background-color: #007bff; /* アクティブなフィルターの色 */
+    color: white;
+    font-weight: bold;
+}
+
+/* 右ペイン (メインコンテンツ) */
+#right-pane {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+}
+
+#right-pane header {
+    background-color: #343a40; /* ダーク系のヘッダー */
+    color: white;
+    padding: 1rem 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#right-pane header h1 {
+    margin: 0;
+    font-size: 1.8em;
+}
+
+#photo-gallery-container {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* レスポンシブなタイル表示 */
+    gap: 15px; /* タイル間の隙間 */
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+
+.photo-tile {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    height: 200px; /* ★タイル自体の高さを固定 (例: 200px) */
+    display: flex; /* 画像と情報を配置するために追加 */
+    flex-direction: column; /* 画像と情報を縦に並べる */
+}
+
+.photo-tile img {
+    width: 100%;
+    height: 150px; /* ★画像コンテナの高さを設定 (タイルの高さより少し小さく) */
+    object-fit: contain; /* ★contain に変更して全体を表示 */
+    display: block;
+    background-color: #eee; /* 画像の余白が目立たないように背景色を設定しても良い */
+}
+
+.photo-tile:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+
+.photo-tile-info {
+    padding: 10px;
+    font-size: 0.85em;
+    color: #555;
+}
+
+.photo-tile-info .title {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    margin-bottom: 3px;
+}
+.photo-tile-info .anime-title {
+    font-size: 0.9em;
+    color: #777;
+}
+
+
+/* モーダルウィンドウ */
+.modal {
+    display: none; /* 初期状態では非表示 */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* スクロール可能に */
+    background-color: rgba(0, 0, 0, 0.7); /* 背景を少し暗く */
+    padding-top: 30px; /* 上部に少し余白 */
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: auto;
+    padding: 25px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 700px; /* モーダルの最大幅 */
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+    text-align: center;
+}
+
+.modal-close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+.modal-close-button:hover,
+.modal-close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-image-container {
+    margin-bottom: 20px;
+    position: relative; /* ヒントの配置のため */
+}
+
+#modal-image {
+    max-width: 100%;
+    max-height: 70vh; /* 画面高さに応じて最大高さを調整 */
+    display: block;
+    margin: 0 auto;
+    border: 2px solid #eee;
+    border-radius: 4px;
+    cursor: pointer; /* 画像クリックで切り替えのため */
+}
+
+#image-toggle-hint {
+    font-size: 0.8em;
+    color: #777;
+    margin-top: 5px;
+}
+
+#show-details-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-bottom: 15px;
+    transition: background-color 0.2s;
+}
+
+#show-details-button:hover {
+    background-color: #0056b3;
+}
+
+.details-area {
+    text-align: left;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.details-area h3, .details-area h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+}
+.details-area h4 {
+    font-size: 1.1em;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+    margin-top: 15px;
+}
+
+
+#map-placeholder-modal {
+    width: 100%;
+    height: 200px;
+    background-color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #666;
+    font-size: 1em;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+#streetview-link-modal {
+    display: inline-block;
+    margin-top: 10px;
+    color: #007bff;
+    text-decoration: none;
+}
+#streetview-link-modal:hover {
+    text-decoration: underline;
+}
+
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    #left-pane {
+        width: 100%;
+        max-height: 200px; /* スマホではフィルターエリアの高さを制限 */
+        border-right: none;
+        border-bottom: 1px solid #d1d5db;
+    }
+    #right-pane header h1 {
+        font-size: 1.5em;
+    }
+    #photo-gallery-container {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* スマホでのタイルサイズ調整 */
+        padding: 15px;
+    }
+    .photo-tile img {
+        height: 120px;
+    }
+    .modal-content {
+        width: 90%;
+        padding: 15px;
+    }
+    #modal-image {
+        max-height: 60vh;
+    }
+}
