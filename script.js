@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const streetViewUrl = `https://www.google.com/maps?q&layer=c&cbll=${exifInfo.latitude},${exifInfo.longitude}`;
                 detailStreetviewLink.href = streetViewUrl;
                 detailStreetviewLink.style.display = 'inline-block';
-                detailStreetviewLink.innerHTML = `<i class="fas fa-street-view"></i> 「${currentPhotoData.title}」をストリートビューで見る`;
+                detailStreetviewLink.innerHTML = `<i class="fas fa-street-view"></i> ストリートビューで見る`;
             });
         } else {
             detailMapElement.innerHTML = `<p style="text-align:center; padding-top: 20px; color: #777;">${mapErrorMessage}</p>`;
@@ -469,6 +469,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         }, { passive: false });
+
+
 
     loadPhotoData();
 });
