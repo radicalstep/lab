@@ -378,5 +378,97 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+
+    // ホイールナビゲーション関連の変数
+    let canNavigateByWheel = true; // ホイールナビゲーションが可能かどうかのフラグ
+    const WHEEL_NAVIGATION_COOLDOWN = 300; // ms, ナビゲーション後のクールダウンタイム (少し長めに設定)
+
+    detailViewContainer.addEventListener('wheel', (event) => {
+        // 詳細ビューが表示されていない場合は何もしない
+        if (!detailViewContainer.classList.contains('active-content')) {
+            return;
+        }
+
+        const target = event.target;
+        const infoPane = document.getElementById('detail-view-info-pane');
+        const photoDescription = document.getElementById('detail-photo-description');
+        const thumbnailList = document.getElementById('detail-thumbnail-list');
+        const mapElement = document.getElementById('detail-map-element');
+
+        // textarea, thumbnail-list, map要素、またはLeafletのインタラクティブな要素上では
+        // デフォルトのホイール動作を優先し、画像ナビゲーションを行わない
+        if (photoDescription.contains(target) || 
+            thumbnailList.contains(target) ||
+            mapElement.contains(target) ||
+            (target.closest && (
+                target.closest('.leaflet-map-pane') || // 地図のタイルやマーカーなど
+                target.closest('.leaflet-control')    // 地図のコントロール（ズームボタンなど）
+            ))) {
+            return;
+        }
+
+        // infoPane (情報表示ペイン) がスクロール可能な場合、そのスクロールを優先
+        if (infoPane.contains(target) && infoPane.scrollHeight > infoPane.clientHeight) {
+            const isScrollingUp = event.deltaY < 0;
+            const isAtTop = infoPane.scrollTop === 0;
+            const isAtBottom = infoPane.scrollTop >= (infoPane.scrollHeight - infoPane.clientHeight - 1); // -1 for safety
+
+            if (isScrollingUp && !isAtTop) { // 上にスクロールしようとしていて、まだ上にスクロールできる
+                return;
+            }
+            if (!isScrollingUp && !isAtBottom) { // 下にスクロールしようとしていて、まだ下にスクロールできる
+                return;
+            }
+            // ここまで来た場合は、infoPaneはスクロール可能だが、既に端に達している
+        }
+        
+        // Y軸方向のホイール移動がない場合は何もしない (例: 横スクロールのみのトラックパッド操作)
+        if (event.deltaY === 0) {
+            return;
+        }
+
+        // ナビゲーションクールダウン中なら、ページのスクロールだけを防いでリターン
+        if (!canNavigateByWheel) {
+            event.preventDefault();
+            return;
+        }
+        
+        // 上記の条件に当てはまらなければ、画像ナビゲーションを試みる
+        let newIndex = currentPhotoIndexInDetail;
+        let performNavigation = false;
+
+        if (event.deltaY < 0) { // ホイールを上に回した場合 (前の画像へ)
+            if (currentPhotoIndexInDetail > 0) {
+                newIndex = currentPhotoIndexInDetail - 1;
+                performNavigation = true;
+            }
+        } else if (event.deltaY > 0) { // ホイールを下に回した場合 (次の画像へ)
+            if (currentPhotoIndexInDetail < currentFilteredPhotosForDetailView.length - 1) {
+                newIndex = currentPhotoIndexInDetail + 1;
+                performNavigation = true;
+            }
+        }
+
+        if (performNavigation) {
+            event.preventDefault(); // 画像ナビゲーションを行うので、ページのスクロールを防ぐ
+            canNavigateByWheel = false; // ナビゲーション実行、クールダウン開始
+
+            const nextPhotoId = currentFilteredPhotosForDetailView[newIndex].id;
+            // openDetailView は async 関数なので Promise を返す
+            openDetailView(nextPhotoId).then(() => {
+                // openDetailView内でpopulateDetailThumbnailsが呼ばれ、
+                // アクティブなサムネイルはscrollIntoViewされる。
+                // マウス操作なので、キーボード操作時のような明示的なfocus()はここでは行わない。
+            }).catch(error => {
+                console.error("Error during wheel navigation:", error);
+            }).finally(() => {
+                // ナビゲーションが成功しても失敗しても、クールダウンタイマーを設定
+                setTimeout(() => {
+                    canNavigateByWheel = true; // クールダウン終了
+                }, WHEEL_NAVIGATION_COOLDOWN);
+            });
+        }
+        }, { passive: false });
+
     loadPhotoData();
 });
