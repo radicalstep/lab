@@ -228,5 +228,55 @@
     "description": "第5話",
     "animeTitleDisplay": "負けヒロインが多すぎる！",
     "uploadedAt": "2025-05-31T21:58:35.478Z"
+  },
+  {
+    "id": 22,
+    "realSrc": "https://radicalstep.github.io/lab/images/1728146052-PnX5fLjOmakv3STtFpsYuIRU.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/1728145747-JiTAcGdx6WMKap3u1LElOXYo.jpg",
+    "title": "豊橋駅東口の路地",
+    "animeFilterTag": "makeine",
+    "description": "オープニング",
+    "animeTitleDisplay": "負けヒロインが多すぎる！",
+    "uploadedAt": "2025-05-31T21:51:58.795Z"
+  },
+  {
+    "id": 23,
+    "realSrc": "https://radicalstep.github.io/lab/images/o1080068615541409303.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/o1080062015541378039.webp",
+    "title": "ボン千賀",
+    "animeFilterTag": "makeine",
+    "description": "第5話",
+    "animeTitleDisplay": "負けヒロインが多すぎる！",
+    "uploadedAt": "2025-05-31T21:58:35.478Z"
+  },
+  {
+    "id": 24,
+    "realSrc": "https://radicalstep.github.io/lab/images/b0048879_1362075.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/b0048879_136584.jpg",
+    "title": "堀川醤油醸造場",
+    "animeFilterTag": "tamayura",
+    "description": "オープニング",
+    "animeTitleDisplay": "たまゆら",
+    "uploadedAt": "2025-06-01T04:16:50.803Z"
+  },
+  {
+    "id": 25,
+    "realSrc": "https://radicalstep.github.io/lab/images/dsc_0053_01.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/b0048879_1421681.jpg",
+    "title": "ぎゃらりぃ梅谷",
+    "animeFilterTag": "tamayura",
+    "description": "オープニング",
+    "animeTitleDisplay": "たまゆら",
+    "uploadedAt": "2025-06-01T04:21:19.701Z"
+  },
+  {
+    "id": 26,
+    "realSrc": "https://radicalstep.github.io/lab/images/o0680051015142407392.jpg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/o0680038315142407341.jpg",
+    "title": "新千歳空港",
+    "animeFilterTag": "yorimoi",
+    "description": "13話",
+    "animeTitleDisplay": "宇宙よりも遠い場所",
+    "uploadedAt": "2025-06-01T04:28:54.928Z"
   }
 ]
