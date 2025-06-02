@@ -27,9 +27,11 @@ class PhotoDataService {
     }
 
     async _processAllPhotosExif(photos) {
-        const photosWithExifPromises = photos.map(async (photo) => {
+        const photosWithExifPromises = photos.map(async(photo) => {
             const exif = await this._fetchExifDataWithExifJS(photo.realSrc);
-            return { ...photo, exif };
+            return { ...photo,
+                exif
+            };
         });
         return Promise.all(photosWithExifPromises);
     }
@@ -45,7 +47,12 @@ class PhotoDataService {
                     const latRef = EXIF.getTag(this, "GPSLatitudeRef");
                     const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
                     let dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
-                    let exifInfo = { latitude: null, longitude: null, dateTimeOriginal: null, error: null };
+                    let exifInfo = {
+                        latitude: null,
+                        longitude: null,
+                        dateTimeOriginal: null,
+                        error: null
+                    };
 
                     if (lat && lon && latRef && lonRef && lat.length === 3 && lon.length === 3) {
                         exifInfo.latitude = PhotoDataService._convertDMSToDD(lat[0].valueOf(), lat[1].valueOf(), lat[2].valueOf(), latRef);
@@ -64,20 +71,25 @@ class PhotoDataService {
                                 if (!exifInfo.error) exifInfo.error = (exifInfo.error ? exifInfo.error + "、" : "") + "日時形式不正";
                             }
                         } else {
-                             if (!exifInfo.error) exifInfo.error = (exifInfo.error ? exifInfo.error + "、" : "") + "日時形式不正";
+                            if (!exifInfo.error) exifInfo.error = (exifInfo.error ? exifInfo.error + "、" : "") + "日時形式不正";
                         }
                     } else {
                         if (!exifInfo.latitude && !exifInfo.longitude) {
-                             exifInfo.error = "位置・日時情報なし";
+                            exifInfo.error = "位置・日時情報なし";
                         } else if (!exifInfo.error) {
-                             exifInfo.error = (exifInfo.error ? exifInfo.error + "、" : "") + "日時情報なし";
+                            exifInfo.error = (exifInfo.error ? exifInfo.error + "、" : "") + "日時情報なし";
                         }
                     }
                     resolve(exifInfo);
                 });
             };
             img.onerror = function() {
-                resolve({ latitude: null, longitude: null, dateTimeOriginal: null, error: "画像読み込み失敗、EXIF取得不可" });
+                resolve({
+                    latitude: null,
+                    longitude: null,
+                    dateTimeOriginal: null,
+                    error: "画像読み込み失敗、EXIF取得不可"
+                });
             }
             img.src = imageSrc;
         });
@@ -85,7 +97,9 @@ class PhotoDataService {
 
     static _convertDMSToDD(degrees, minutes, seconds, direction) {
         let dd = parseFloat(degrees) + parseFloat(minutes) / 60 + parseFloat(seconds) / (60 * 60);
-        if (direction === "S" || direction === "W") { dd = dd * -1; }
+        if (direction === "S" || direction === "W") {
+            dd = dd * -1;
+        }
         return dd;
     }
 
@@ -132,7 +146,10 @@ class FilterManager {
         const animeFilters = [];
         allPhotosData.forEach(photo => {
             if (!animeFilters.some(f => f.tag === photo.animeFilterTag)) {
-                animeFilters.push({ tag: photo.animeFilterTag, display: photo.animeTitleDisplay });
+                animeFilters.push({
+                    tag: photo.animeFilterTag,
+                    display: photo.animeTitleDisplay
+                });
             }
         });
         animeFilters.sort((a, b) => a.display.localeCompare(b.display, 'ja'));
@@ -216,7 +233,7 @@ class MapView extends View {
     initializeMap() {
         if (!this.mainMap) {
             this.mainMapDomElement.innerHTML = ''; // Clear any previous content (like "no map" messages)
-            this.mainMap = L.map(this.mainMapDomElement); 
+            this.mainMap = L.map(this.mainMapDomElement);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19,
@@ -226,7 +243,7 @@ class MapView extends View {
 
     plotMarkers(photosToPlot) {
         this.currentFilteredPhotosForMap = photosToPlot.filter(p => p.exif && p.exif.latitude && p.exif.longitude);
-        
+
         this.mainMapMarkers.forEach(marker => marker.remove());
         this.mainMapMarkers = [];
 
@@ -249,7 +266,7 @@ class MapView extends View {
             this.mainMapDomElement.appendChild(messageOverlay);
             return; // No markers to plot
         }
-        
+
         this.currentFilteredPhotosForMap.forEach(photo => {
             const marker = L.marker([photo.exif.latitude, photo.exif.longitude]);
             marker.photoId = photo.id; // マーカーに写真IDをカスタムプロパティとして保存
@@ -268,13 +285,13 @@ class MapView extends View {
                     </div>
                 </div>`;
             marker.bindPopup(popupContent);
-            
+
             marker.on('popupopen', (e) => {
                 const popupNode = e.popup.getElement();
                 if (popupNode) {
                     const detailLinks = popupNode.querySelectorAll('.map-popup-detail-link, .map-popup-thumbnail-image');
                     detailLinks.forEach(link => {
-                        const newLink = link.cloneNode(true); 
+                        const newLink = link.cloneNode(true);
                         link.parentNode.replaceChild(newLink, link);
                         newLink.addEventListener('click', (event) => {
                             event.preventDefault();
@@ -302,7 +319,7 @@ class MapView extends View {
         const targetMarker = this.mainMapMarkers.find(marker => marker.photoId === photoId);
 
         if (targetMarker) {
-            this.mainMap.closePopup(); // 他に開いているポップアップがあれば閉じる
+            this.mainMap.closePopup();
             targetMarker.openPopup();
         } else {
             console.warn(`MapView: Marker for photo ID ${photoId} not found. It might be filtered out or have no location data.`);
@@ -312,7 +329,7 @@ class MapView extends View {
     invalidateSize() {
         if (this.mainMap) {
             requestAnimationFrame(() => {
-                 this.mainMap.invalidateSize();
+                this.mainMap.invalidateSize();
             });
         }
     }
@@ -359,7 +376,7 @@ class DetailView extends View {
         this.dom.title.textContent = this.currentPhotoData.title;
         this.dom.animeTitleDisplay.textContent = `アニメ: ${this.currentPhotoData.animeTitleDisplay}`;
         this.dom.photoDescription.value = this.currentPhotoData.description;
-        this.dom.photoDescription.readOnly = false; 
+        this.dom.photoDescription.readOnly = false;
         this._updateExifDisplay(this.currentPhotoData.exif);
         this._setupOrUpdateDetailMap(this.currentPhotoData.exif);
         this._populateThumbnails(this.currentPhotoData.id, this.currentPhotosForContext);
@@ -367,25 +384,41 @@ class DetailView extends View {
         this.show();
         const activeThumb = this.dom.thumbnailList.querySelector('.active-thumbnail');
         if (activeThumb) {
-            activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            activeThumb.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center'
+            });
         }
     }
     _updateExifDisplay(exifInfo) {
         if (exifInfo.dateTimeOriginal) {
             try {
                 const date = new Date(exifInfo.dateTimeOriginal);
-                if (isNaN(date.getTime())) { throw new Error("Invalid date"); }
-                const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Tokyo' };
+                if (isNaN(date.getTime())) {
+                    throw new Error("Invalid date");
+                }
+                const options = {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false,
+                    timeZone: 'Asia/Tokyo'
+                };
                 this.dom.datetimeOriginal.innerHTML = `<i class="far fa-calendar-alt"></i> 撮影日時: ${date.toLocaleString('ja-JP', options)}`;
-            } catch(e) {
+            } catch (e) {
                 this.dom.datetimeOriginal.innerHTML = `<i class="far fa-calendar-alt"></i> 撮影日時: ${exifInfo.dateTimeOriginal || '取得エラー'} (書式エラーの可能性あり)`;
             }
         } else if (exifInfo.error && exifInfo.error.includes("日時情報")) {
-             this.dom.datetimeOriginal.innerHTML = `<i class="far fa-calendar-alt"></i> 日時情報: ${exifInfo.error}`;
+            this.dom.datetimeOriginal.innerHTML = `<i class="far fa-calendar-alt"></i> 日時情報: ${exifInfo.error}`;
         } else {
             this.dom.datetimeOriginal.innerHTML = `<i class="far fa-calendar-alt"></i> 撮影日時情報はありません。`;
         }
     }
+
     _setupOrUpdateDetailMap(exifInfo) {
         if (this.detailMap) {
             this.detailMap.remove();
@@ -394,17 +427,25 @@ class DetailView extends View {
         this.dom.mapElement.innerHTML = '';
         if (exifInfo && exifInfo.latitude && exifInfo.longitude) {
             requestAnimationFrame(() => {
-                this.detailMap = L.map(this.dom.mapElement, { attributionControl: false })
+                this.detailMap = L.map(this.dom.mapElement, {
+                        attributionControl: false
+                    })
                     .setView([exifInfo.latitude, exifInfo.longitude], 12);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(this.detailMap);
-                L.control.attribution({prefix: '<a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> | © <a href="http://osm.org/copyright">OSM</a>'}).addTo(this.detailMap);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19
+                }).addTo(this.detailMap);
+                L.control.attribution({
+                    prefix: '<a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> | © <a href="http://osm.org/copyright">OSM</a>'
+                }).addTo(this.detailMap);
+
                 const marker = L.marker([exifInfo.latitude, exifInfo.longitude])
                     .addTo(this.detailMap)
                     .bindPopup(this.currentPhotoData.title || '撮影場所');
+
                 setTimeout(() => {
                     if (this.detailMap) this.detailMap.invalidateSize();
-                    marker.openPopup();
                 }, 100);
+
                 const streetViewUrl = `https://www.google.com/maps?q&layer=c&cbll=${exifInfo.latitude},${exifInfo.longitude}`;
                 this.dom.streetviewLink.href = streetViewUrl;
                 this.dom.streetviewLink.style.display = 'inline-block';
@@ -452,7 +493,7 @@ class DetailView extends View {
         this.dom.toggleComparisonButton.textContent = '左右で比較する';
         this.isDetailSideBySideActive = false;
         this.isRealImageDisplayedInSingleView = true;
-        if(this.currentPhotoData) this.dom.modalImage.src = this.currentPhotoData.realSrc;
+        if (this.currentPhotoData) this.dom.modalImage.src = this.currentPhotoData.realSrc;
     }
     _switchToSideBySideView() {
         this.dom.singleImageView.classList.remove('active-detail-image-display');
@@ -494,7 +535,7 @@ class DetailView extends View {
             if (this.callbacks.onReturnToMap) this.callbacks.onReturnToMap();
         });
         document.addEventListener('keydown', (event) => {
-            if (this.containerElement.classList.contains('active-content')) { 
+            if (this.containerElement.classList.contains('active-content')) {
                 if (['input', 'textarea'].includes(event.target.tagName.toLowerCase())) return;
                 let navigated = false;
                 if (event.key === 'ArrowLeft') {
@@ -518,31 +559,31 @@ class DetailView extends View {
             const photoDescriptionEl = this.dom.photoDescription;
             const thumbnailListEl = this.dom.thumbnailList;
             const mapInDetailEl = this.dom.mapElement;
-            if (photoDescriptionEl.contains(target) || 
+            if (photoDescriptionEl.contains(target) ||
                 thumbnailListEl.contains(target) ||
-                mapInDetailEl.contains(target) || 
+                mapInDetailEl.contains(target) ||
                 (target.closest && (target.closest('.leaflet-map-pane') || target.closest('.leaflet-control')))) {
-                return; 
+                return;
             }
             if (infoPane.contains(target) && infoPane.scrollHeight > infoPane.clientHeight) {
                 const isScrollingUp = event.deltaY < 0;
                 const isAtTop = infoPane.scrollTop === 0;
-                const isAtBottom = infoPane.scrollTop >= (infoPane.scrollHeight - infoPane.clientHeight - 1); 
+                const isAtBottom = infoPane.scrollTop >= (infoPane.scrollHeight - infoPane.clientHeight - 1);
                 if ((isScrollingUp && !isAtTop) || (!isScrollingUp && !isAtBottom)) {
-                    return; 
+                    return;
                 }
             }
             if (event.deltaY === 0 || !this.canNavigateByWheel) {
-                if(!this.canNavigateByWheel) event.preventDefault(); 
+                if (!this.canNavigateByWheel) event.preventDefault();
                 return;
             }
             let navigated = false;
-            if (event.deltaY < 0) { 
+            if (event.deltaY < 0) {
                 if (this.currentPhotoIndexInContext > 0) {
                     this.callbacks.onNavigateToPhoto(this.currentPhotosForContext[this.currentPhotoIndexInContext - 1].id);
                     navigated = true;
                 }
-            } else if (event.deltaY > 0) { 
+            } else if (event.deltaY > 0) {
                 if (this.currentPhotoIndexInContext < this.currentPhotosForContext.length - 1) {
                     this.callbacks.onNavigateToPhoto(this.currentPhotosForContext[this.currentPhotoIndexInContext + 1].id);
                     navigated = true;
@@ -551,9 +592,13 @@ class DetailView extends View {
             if (navigated) {
                 event.preventDefault();
                 this.canNavigateByWheel = false;
-                setTimeout(() => { this.canNavigateByWheel = true; }, this.WHEEL_NAVIGATION_COOLDOWN);
+                setTimeout(() => {
+                    this.canNavigateByWheel = true;
+                }, this.WHEEL_NAVIGATION_COOLDOWN);
             }
-        }, { passive: false }); 
+        }, {
+            passive: false
+        });
     }
 }
 
@@ -570,7 +615,7 @@ class PhotoApp {
             returnToGalleryButton: document.getElementById('return-to-gallery-button'),
             returnToMapButton: document.getElementById('return-to-map-button'),
             detail: {
-                rightPaneHeaderTitle: document.getElementById('right-pane-header-title'), // This seems duplicated, should be specific to detail view's header if different
+                rightPaneHeaderTitle: document.getElementById('right-pane-header-title'),
                 modalImage: document.getElementById('detail-modal-image'),
                 sbsAnimeImage: document.getElementById('detail-sbs-anime-image'),
                 sbsRealImage: document.getElementById('detail-sbs-real-image'),
@@ -585,20 +630,20 @@ class PhotoApp {
                 sideBySideView: document.getElementById('detail-side-by-side-view'),
                 thumbnailList: document.getElementById('detail-thumbnail-list'),
                 infoPane: document.getElementById('detail-view-info-pane'),
-                returnToGalleryButton: document.getElementById('return-to-gallery-button'), 
+                returnToGalleryButton: document.getElementById('return-to-gallery-button'),
                 returnToMapButton: document.getElementById('return-to-map-button')
             }
         };
 
         this.photoDataService = new PhotoDataService('photos.json');
         this.filterManager = new FilterManager(this.dom.filterList, this.handleFilterChange.bind(this));
-        
+
         this.galleryView = new GalleryView(this.dom.photoGalleryContainer, this.handlePhotoSelect.bind(this));
         this.mapView = new MapView(this.dom.mapViewContainer, this.dom.mainMapElement, this.handlePhotoSelect.bind(this));
-        
+
         const detailViewCallbacks = {
             onReturnToGallery: () => this.switchToView('gallery'),
-            onReturnToMap: () => this.switchToView('map'), 
+            onReturnToMap: () => this.switchToView('map'),
             onThumbnailClick: (photoId) => this.openDetailView(photoId),
             onNavigateToPhoto: (photoId) => this.openDetailView(photoId)
         };
@@ -606,25 +651,25 @@ class PhotoApp {
 
         this.allPhotos = [];
         this.currentFilteredPhotos = [];
-        
-        this.currentView = 'gallery'; 
-        this.previousViewBeforeDetail = 'gallery'; 
-        
-        this.lastDetailPhotoLocation = null; 
+
+        this.currentView = 'gallery';
+        this.previousViewBeforeDetail = 'gallery';
+
+        this.lastDetailPhotoLocation = null;
         this.lastOpenedDetailPhotoId = null; // 最後に開いた詳細写真のID
 
         this.isFirstMapLoad = true;
-        this.mapLastCenter = [36, 138]; 
-        this.mapLastZoom = 7;          
-        this.mapShouldFitBounds = false; 
+        this.mapLastCenter = [36, 138];
+        this.mapLastZoom = 7;
+        this.mapShouldFitBounds = false;
     }
 
     async init() {
         try {
             this.allPhotos = await this.photoDataService.loadAndProcessPhotos();
             this.filterManager.populateFilters(this.allPhotos);
-            this.handleFilterChange(this.filterManager.getActiveFilter()); 
-            this.switchToView('gallery'); 
+            this.handleFilterChange(this.filterManager.getActiveFilter());
+            this.switchToView('gallery');
             this._initGlobalEventListeners();
         } catch (error) {
             this.dom.photoGalleryContainer.innerHTML = `<p style="color: red; text-align: center;">アプリケーションの初期化に失敗しました。詳細: ${error.message}</p>`;
@@ -635,7 +680,7 @@ class PhotoApp {
     _initGlobalEventListeners() {
         this.dom.toggleMainViewButton.addEventListener('click', () => {
             if (this.currentView === 'gallery') {
-                this.mapShouldFitBounds = false; 
+                this.mapShouldFitBounds = false;
                 this.switchToView('map');
             } else if (this.currentView === 'map') {
                 this.switchToView('gallery');
@@ -644,20 +689,20 @@ class PhotoApp {
     }
 
     handleFilterChange(filterType) {
-        this.currentFilteredPhotos = (filterType === 'all' || !filterType)
-            ? [...this.allPhotos]
-            : this.allPhotos.filter(photo => photo.animeFilterTag === filterType);
+        this.currentFilteredPhotos = (filterType === 'all' || !filterType) ?
+            [...this.allPhotos] :
+            this.allPhotos.filter(photo => photo.animeFilterTag === filterType);
 
         this.lastDetailPhotoLocation = null;
         this.lastOpenedDetailPhotoId = null; // フィルター変更時にもリセット
-        
+
         if (this.currentView === 'gallery') {
             this.galleryView.displayPhotos(this.currentFilteredPhotos);
         } else if (this.currentView === 'map') {
-            this.mapShouldFitBounds = true; 
-            this.switchToView('map'); 
+            this.mapShouldFitBounds = true;
+            this.switchToView('map');
         } else if (this.currentView === 'detail') {
-            this.switchToView('gallery'); 
+            this.switchToView('gallery');
         }
     }
 
@@ -682,17 +727,17 @@ class PhotoApp {
                 }
             }
         }
-        
+
         let contextPhotosForDetailNav;
         if (this.previousViewBeforeDetail === 'map') {
             contextPhotosForDetailNav = this.mapView.currentFilteredPhotosForMap;
-        } else { 
+        } else {
             const activeFilter = this.filterManager.getActiveFilter();
-            contextPhotosForDetailNav = (activeFilter === 'all' || !activeFilter)
-                ? [...this.allPhotos]
-                : this.allPhotos.filter(photo => photo.animeFilterTag === activeFilter);
+            contextPhotosForDetailNav = (activeFilter === 'all' || !activeFilter) ?
+                [...this.allPhotos] :
+                this.allPhotos.filter(photo => photo.animeFilterTag === activeFilter);
         }
-        
+
         const currentIndexInContext = contextPhotosForDetailNav.findIndex(p => p.id === photoToDisplay.id);
 
         if (photoToDisplay.exif && photoToDisplay.exif.latitude && photoToDisplay.exif.longitude) {
@@ -701,8 +746,8 @@ class PhotoApp {
             this.lastDetailPhotoLocation = null;
         }
         this.lastOpenedDetailPhotoId = photoToDisplay.id; // 詳細表示する写真のIDを保存
-        
-        this.currentView = 'detail'; 
+
+        this.currentView = 'detail';
         this.galleryView.hide();
         this.mapView.hide();
         this.detailView.displayPhotoDetail(photoToDisplay, contextPhotosForDetailNav, currentIndexInContext);
@@ -710,13 +755,13 @@ class PhotoApp {
     }
 
     switchToView(viewName) {
-        const previousActualView = this.currentView; 
-        
+        const previousActualView = this.currentView;
+
         if (this.currentView === 'detail') {
             this.detailView.hideAndCleanup();
             // lastOpenedDetailPhotoId はここではリセットしない (マップ遷移時に使うため)
         }
-        
+
         if (previousActualView === 'map' && viewName === 'gallery' && this.mapView.mainMap) {
             const currentMapState = this.mapView.getCurrentViewState();
             if (currentMapState) {
@@ -726,7 +771,7 @@ class PhotoApp {
         }
 
         this.currentView = viewName;
-        
+
         this.galleryView.hide();
         this.mapView.hide();
 
@@ -736,7 +781,7 @@ class PhotoApp {
             this.galleryView.show();
         } else if (viewName === 'map') {
             this.dom.rightPaneHeaderTitle.textContent = '聖地マップ';
-            this.mapView.initializeMap(); 
+            this.mapView.initializeMap();
 
             const photosForMap = this.currentFilteredPhotos.filter(p => p.exif && p.exif.latitude && p.exif.longitude);
             const markerCoordinates = photosForMap.length > 0 ? photosForMap.map(p => [p.exif.latitude, p.exif.longitude]) : [];
@@ -765,7 +810,7 @@ class PhotoApp {
             if (!viewSetBySpecificCondition && this.mapView.mainMap) { // 上記のいずれでもビューが設定されなかった場合
                 this.mapView.mainMap.setView(this.mapLastCenter, this.mapLastZoom);
             }
-            
+
             this.mapView.plotMarkers(photosForMap); // マップのビュー設定後にマーカーをプロット
 
             // 詳細ビューからマップに遷移した場合、該当マーカーをアクティブ化
@@ -773,15 +818,15 @@ class PhotoApp {
                 // マップの描画やマーカーの配置が完了するのを少し待つ
                 setTimeout(() => {
                     if (this.mapView.mainMap) { //念のためマップインスタンスの存在確認
-                         this.mapView.activateMarkerForPhoto(this.lastOpenedDetailPhotoId);
+                        this.mapView.activateMarkerForPhoto(this.lastOpenedDetailPhotoId);
                     }
                 }, 150); // 150ミリ秒の遅延 (環境に応じて調整)
             }
-            
+
             this.mapView.show();
             this.mapView.invalidateSize(); // invalidateSizeはshowの後が良い
         }
-        
+
         this._updateHeaderAndControls();
     }
 
