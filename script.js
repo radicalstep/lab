@@ -106,9 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeFilter = document.querySelector('#filter-list .filter-item.active');
         const filterType = activeFilter ? activeFilter.dataset.filter : 'all';
         filterAndDisplayPhotosInGallery(filterType);
-        // previousViewBeforeDetail は exitDetailViewAndSwitch で設定されるか、
-        // openDetailView の冒頭で、detail 以外のビューから来た場合に設定される。
-        // ここでは、このビューがアクティブになったことを示す。
     }
 
     function showMapView() {
@@ -127,11 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeMainMapAndPlotMarkers();
 
         if (previousViewBeforeDetail === 'detail' && lastDetailPhotoLocation && mainMap) {
-            mainMap.setView(lastDetailPhotoLocation, 15); // ズームレベル15で中心を移動
-            // lastDetailPhotoLocation は一度使ったらクリアしても良いが、再度マップに戻る場合を考慮して残すこともできる。
-            // ここでは、詳細ビューを開くたびに上書きされるので、クリアは必須ではない。
+            mainMap.setView(lastDetailPhotoLocation, 15); 
         }
-        // previousViewBeforeDetail の更新は exitDetailViewAndSwitch や openDetailView で行う
     }
 
     function initializeMainMapAndPlotMarkers() {
@@ -186,12 +180,21 @@ document.addEventListener('DOMContentLoaded', () => {
         
         photosToPlot.forEach(photo => {
             const marker = L.marker([photo.exif.latitude, photo.exif.longitude]);
+            
+            const streetViewUrl = `https://www.google.com/maps?q&layer=c&cbll=${photo.exif.latitude},${photo.exif.longitude}&cbp=12,0,0,0,0`;
+            
             const popupContent = `
-                <div>
-                    <img src="${photo.realSrc}" alt="${photo.title}" class="popup-thumbnail">
+                <div class="map-popup-custom-content">
+                    <img src="${photo.realSrc}" alt="${photo.title}" class="popup-thumbnail map-popup-thumbnail-image" data-photo-id="${photo.id}" style="cursor: pointer;">
                     <strong>${photo.title}</strong><br>
                     アニメ: ${photo.animeTitleDisplay}<br>
-                    <a href="#" class="map-popup-detail-link" data-photo-id="${photo.id}">詳細を見る</a>
+                    <div class="map-popup-actions">
+                        <a href="#" class="map-popup-detail-link" data-photo-id="${photo.id}">詳細を見る</a>
+                        <a href="${streetViewUrl}" target="_blank" class="map-popup-streetview-link" title="ストリートビューで見る">
+                            <i class="fas fa-street-view"></i>
+                            <span class="map-popup-button-text-sr-only">ストリートビュー</span>
+                        </a>
+                    </div>
                 </div>`;
             marker.bindPopup(popupContent);
             
@@ -209,6 +212,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (mainMap) mainMap.closePopup();
                         });
                     }
+
+                    const thumbnailImage = popupNode.querySelector('.map-popup-thumbnail-image');
+                    if (thumbnailImage) {
+                        const newThumbnailImage = thumbnailImage.cloneNode(true);
+                        thumbnailImage.parentNode.replaceChild(newThumbnailImage, thumbnailImage);
+                        
+                        newThumbnailImage.addEventListener('click', (event) => {
+                            event.preventDefault(); 
+                            const photoId = parseInt(event.target.dataset.photoId);
+                            openDetailView(photoId);
+                            if (mainMap) mainMap.closePopup();
+                        });
+                    }
                 }
             });
 
@@ -216,13 +232,10 @@ document.addEventListener('DOMContentLoaded', () => {
             markerCoordinates.push([photo.exif.latitude, photo.exif.longitude]);
         });
 
-        // マーカーをマップに追加
         if (mainMapMarkers.length > 0) {
             L.featureGroup(mainMapMarkers).addTo(mainMap);
         }
 
-        // 詳細から戻ってきた場合は、showMapView内でsetViewするので、ここではfitBoundsしない。
-        // それ以外の通常のマップ表示やフィルター変更時はfitBoundsを行う。
         if (!(previousViewBeforeDetail === 'detail' && lastDetailPhotoLocation)) {
             if (mainMapMarkers.length > 0) {
                 if (markerCoordinates.length > 1) {
@@ -234,8 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(mainMap) mainMap.setView([36, 138], 5); 
             }
         }
-        // previousViewBeforeDetail === 'detail' の場合は、マーカーはプロット済みで、
-        // 中心位置は showMapView の中で lastDetailPhotoLocation を使って設定される。
     }
 
     function filterAndDisplayPhotosInGallery(filterType) {
@@ -334,13 +345,12 @@ document.addEventListener('DOMContentLoaded', () => {
             lastDetailPhotoLocation = null;
         }
 
-        if (currentView !== 'detail') { // detailビューに遷移する直前のビューを記録
+        if (currentView !== 'detail') {
             previousViewBeforeDetail = currentView; 
         }
-        currentView = 'detail'; // 現在のビューを 'detail' に更新
+        currentView = 'detail';
         
         let photosForDetailContext;
-        // previousViewBeforeDetail は 'gallery' または 'map' のはず
         if (previousViewBeforeDetail === 'map') { 
             photosForDetailContext = [...currentFilteredPhotosForMap];
         } else { 
@@ -417,13 +427,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function exitDetailViewAndSwitch(targetView) {
-        previousViewBeforeDetail = currentView; // 'detail' を記録 (これが重要)
+        previousViewBeforeDetail = currentView; 
 
         detailViewContainer.classList.remove('active-content');
         
         currentPhotoData = null;
         currentPhotoIndexInDetail = -1;
-        // lastDetailPhotoLocation は showMapView で参照されるので、ここではクリアしない
 
         if (detailMap) { detailMap.remove(); detailMap = null; }
         currentMapMarker = null;
@@ -479,18 +488,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const filterType = event.target.dataset.filter;
 
             if (currentView === 'detail') {
-                // 詳細表示中にフィルター変更 → ギャラリーに戻ってフィルター適用
                 exitDetailViewAndSwitch('gallery'); 
             } else if (currentView === 'map') {
-                // マップ表示中にフィルター変更 → マップを更新
-                // この時、詳細から戻ったわけではないので、fitBoundsを優先
-                previousViewBeforeDetail = 'map'; // fitBoundsの挙動制御のため
-                lastDetailPhotoLocation = null;   // fitBoundsを優先させる
+                previousViewBeforeDetail = 'map'; 
+                lastDetailPhotoLocation = null;   
                 
                 currentFilteredPhotosForMap = (filterType === 'all')
                     ? allPhotosData.filter(photo => photo.exif && photo.exif.latitude && photo.exif.longitude)
                     : allPhotosData.filter(photo => photo.animeFilterTag === filterType && photo.exif && photo.exif.latitude && photo.exif.longitude);
-                plotMarkersOnMainMap(currentFilteredPhotosForMap); // ここでfitBounds等が起こる
+                plotMarkersOnMainMap(currentFilteredPhotosForMap);
                 if (mainMap) mainMap.invalidateSize();
             } else if (currentView === 'gallery') {
                 filterAndDisplayPhotosInGallery(filterType);
@@ -500,11 +506,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     toggleMainViewButton.addEventListener('click', () => {
         if (currentView === 'gallery') {
-            previousViewBeforeDetail = 'gallery'; // ギャラリーからマップへ
-            lastDetailPhotoLocation = null; // fitBoundsを優先させる
+            previousViewBeforeDetail = 'gallery'; 
+            lastDetailPhotoLocation = null; 
             showMapView();
         } else if (currentView === 'map') {
-            previousViewBeforeDetail = 'map'; // マップからギャラリーへ
+            previousViewBeforeDetail = 'map'; 
             showGalleryView();
         }
     });
