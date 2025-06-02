@@ -12,11 +12,11 @@ body {
 .app-container {
     display: flex;
     min-height: 100vh;
-    height: 100vh;
+    height: 100vh; /* 親要素の高さを固定 */
     width: 100%;
     max-width: 1600px;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    overflow: hidden;
+    overflow: hidden; /* app-container自体はスクロールしない */
 }
 
 /* 左ペイン */
@@ -44,7 +44,7 @@ body {
     list-style: none;
     padding: 0;
     margin: 0;
-    overflow-y: auto;
+    overflow-y: auto; /* フィルター項目が多い場合にスクロール */
     flex-grow: 1;
 }
 
@@ -73,7 +73,7 @@ body {
     display: flex;
     flex-direction: column;
     background-color: #ffffff;
-    overflow: hidden;
+    overflow: hidden; /* 右ペイン自体がスクロールしないように */
 }
 
 #right-pane header {
@@ -87,7 +87,7 @@ body {
     align-items: center;
     position: relative;
     z-index: 10;
-    flex-shrink: 0;
+    flex-shrink: 0; /* ヘッダーの高さが縮まないように */
 }
 
 #right-pane-header-title {
@@ -95,7 +95,13 @@ body {
     font-size: 1.5em;
 }
 
-#close-detail-view-button {
+.header-buttons {
+    display: flex;
+    gap: 10px; /* ボタン間のスペース */
+}
+
+/* ボタン共通スタイル */
+.header-buttons button {
     background-color: #6c757d;
     color: white;
     border: none;
@@ -105,31 +111,33 @@ body {
     font-size: 0.9em;
     transition: background-color 0.2s;
 }
-#close-detail-view-button:hover {
+.header-buttons button:hover {
     background-color: #5a6268;
 }
 
+
 /* コンテンツ表示エリア共通スタイル */
 .content-view {
-    display: none;
-    flex-grow: 1;
-    min-height: 0;
+    display: none; /* 通常は非表示 */
+    flex-grow: 1; /* 表示されたときに残りの高さを埋める */
+    min-height: 0; /* flexアイテムが適切に縮小できるように */
+    overflow: hidden; /* 各ビューが overflow:auto を持つため、コンテナは hidden */
 }
 .content-view.active-content {
-    display: flex;
+    display: flex; /* アクティブなビューの基本表示形式 */
 }
 
 /* タイルギャラリーコンテナ */
 #photo-gallery-container {
     padding: 20px;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    row-gap: 10px;    /* 行間を10pxに */
-    column-gap: 15px; /* 列間は15pxのまま */
-    overflow-y: auto;
-    align-content: start; /* これを追加！ */
+    row-gap: 10px;
+    column-gap: 15px;
+    overflow-y: auto; /* ギャラリーがスクロールするように */
+    align-content: start; /* タイルが上から詰まるように */
 }
 #photo-gallery-container.active-content {
-    display: grid;
+    display: grid; /* ギャラリーはgridレイアウト */
 }
 
 
@@ -183,6 +191,67 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+
+/* マップビューコンテナ */
+#map-view-container {
+    flex-direction: column;
+    padding: 0;
+    background-color: #e9ecef;
+}
+#map-view-container.active-content {
+    display: flex;
+}
+
+#main-map-element {
+    height: 100%;
+    width: 100%;
+    flex-grow: 1;
+    position: relative; /* メッセージオーバーレイの基準 */
+}
+
+/* Leafletポップアップのスタイル調整 */
+.leaflet-popup-content-wrapper {
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+.leaflet-popup-content {
+    font-family: 'Arial', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 12px !important;
+    min-width: 200px;
+}
+.leaflet-popup-content strong {
+    font-size: 1.1em;
+    color: #333;
+    display: block;
+    margin-bottom: 5px;
+}
+.leaflet-popup-content img.popup-thumbnail {
+    width: 100%;
+    max-height: 120px;
+    object-fit: cover;
+    margin-bottom: 8px;
+    border-radius: 3px;
+    border: 1px solid #ddd;
+}
+.leaflet-popup-content a.map-popup-detail-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 8px;
+    padding: 5px 8px;
+    background-color: #f0f8ff;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+.leaflet-popup-content a.map-popup-detail-link:hover {
+    text-decoration: none;
+    background-color: #e0f0ff;
+}
+
 
 /* 詳細ビューコンテナ */
 #detail-view-container {
@@ -238,7 +307,7 @@ body {
 
 #detail-single-image-view #detail-modal-image {
     max-width: 100%;
-    max-height: 80vh;
+    max-height: 100%;
     border: 3px solid #444;
     border-radius: 4px;
     cursor: pointer;
@@ -312,21 +381,19 @@ body {
     border-color: rgba(255,255,255,0.7);
 }
 
-#detail-view-info-pane h2 { /* id="detail-title" のスタイル */
+#detail-view-info-pane h2 {
     font-size: 1.6em;
     margin-top: 0;
-    margin-bottom: 1px; /* ★調整 */
+    margin-bottom: 1px;
     flex-shrink: 0;
-    /* ▼ここから追加▼ */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* ▲ここまで追加▲ */
 }
 #detail-anime-title-display {
     font-size: 1em;
     color: #555;
-    margin-bottom: 5px; /* ★調整 */
+    margin-bottom: 5px;
     font-weight: 500;
     flex-shrink: 0;
 }
@@ -335,15 +402,22 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 150px;
+    margin-bottom: 15px;
 }
 #detail-photo-info-area h3 {
+    font-size: 1.1em;
+    margin-top: 10px;
     margin-bottom: 8px;
     flex-shrink: 0;
+    color: #444;
+}
+#detail-photo-info-area h3 i {
+    margin-right: 6px;
+    color: #6c757d;
 }
 
 #detail-photo-description {
     width: 100%;
-    height: 100px;
     min-height: 50px;
     max-height: 200px;
     padding: 8px;
@@ -358,6 +432,7 @@ body {
     resize: none;
     overflow-y: auto;
     margin-bottom: 10px;
+    flex-grow: 1;
 }
 
 .photo-meta-info {
@@ -377,8 +452,15 @@ body {
     margin-bottom: 12px;
 }
 #detail-map-area h3 {
+    font-size: 1.1em;
+    margin-top: 10px;
     margin-bottom: 8px;
     flex-shrink: 0;
+    color: #444;
+}
+#detail-map-area h3 i {
+    margin-right: 6px;
+    color: #6c757d;
 }
 
 #detail-map-element {
@@ -468,10 +550,12 @@ body {
 }
 
 
+/* レスポンシブデザイン */
 @media (max-width: 1024px) {
-    #detail-view-info-pane { flex: 0 0 40%; padding: 15px 20px; overflow-y: auto; }
-    #detail-view-info-pane h2 { margin-bottom: 1px; } /* ★調整 */
-    #detail-anime-title-display { margin-bottom: 5px; } /* ★調整 */
+    #detail-view-image-pane { flex: 0 0 60%; }
+    #detail-view-info-pane { flex: 0 0 40%; padding: 15px 20px; }
+    #detail-view-info-pane h2 { margin-bottom: 1px; }
+    #detail-anime-title-display { margin-bottom: 5px; }
     #detail-photo-info-area { min-height: 120px; }
     #detail-photo-description { height: 80px; min-height: 40px; max-height: 150px; }
     #detail-map-element { height: 150px; }
@@ -494,7 +578,10 @@ body {
     }
     #right-pane header { padding: 0.7rem 15px; }
     #right-pane-header-title { font-size: 1.3em; }
-    #close-detail-view-button { font-size: 0.8em; padding: 6px 10px; }
+    .header-buttons button {
+        padding: 6px 10px;
+        font-size: 0.85em;
+    }
 
     #photo-gallery-container {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -509,7 +596,7 @@ body {
     #detail-view-image-pane {
         flex: 0 0 auto;
         height: auto;
-        min-height: 50vh;
+        min-height: 45vh;
         padding-top: 15px;
         padding-right: 15px;
         padding-bottom: 50px;
@@ -524,11 +611,8 @@ body {
         overflow-y: auto;
     }
 
-    .detail-image-display.active-detail-image-display {
-    }
-
     #detail-single-image-view #detail-modal-image {
-        max-height: 50vh;
+        max-height: 40vh;
     }
     #detail-side-by-side-view {
         flex-direction: column;
@@ -558,9 +642,8 @@ body {
         margin-bottom: 10px;
     }
 
-    #detail-view-info-pane h2 { font-size: 1.4em; margin-bottom: 1px; } /* ★調整 */
-    #detail-anime-title-display { font-size: 0.95em; margin-bottom: 5px; } /* ★調整 */
-
+    #detail-view-info-pane h2 { font-size: 1.4em; margin-bottom: 1px; }
+    #detail-anime-title-display { font-size: 0.95em; margin-bottom: 5px; }
 
     #detail-photo-info-area {
         flex-grow: 0;
