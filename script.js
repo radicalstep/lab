@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
     const filterList = document.getElementById('filter-list');
     const rightPaneHeaderTitle = document.getElementById('right-pane-header-title');
-    const closeDetailViewButton = document.getElementById('close-detail-view-button');
     const photoGalleryContainer = document.getElementById('photo-gallery-container');
     const detailViewContainer = document.getElementById('detail-view-container');
     const detailModalImage = document.getElementById('detail-modal-image');
@@ -17,15 +17,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailSingleImageView = document.getElementById('detail-single-image-view');
     const detailSideBySideView = document.getElementById('detail-side-by-side-view');
     const detailThumbnailList = document.getElementById('detail-thumbnail-list');
+    
+    const toggleMainViewButton = document.getElementById('toggle-main-view-button');
+    const returnToGalleryButton = document.getElementById('return-to-gallery-button');
+    const returnToMapButton = document.getElementById('return-to-map-button');
 
+    const mapViewContainer = document.getElementById('map-view-container');
+    const mainMapElement = document.getElementById('main-map-element');
+
+    // State Variables
     let allPhotosData = [];
     let currentPhotoData = null;
     let isRealImageDisplayedInSingleView = true;
     let isDetailSideBySideActive = false;
     let detailMap = null;
     let currentMapMarker = null;
-    let currentFilteredPhotosForDetailView = [];
-    let currentPhotoIndexInDetail = -1; // ★追加: 詳細ビューでの現在の写真のインデックス
+    let currentFilteredPhotosForGallery = [];
+    let currentPhotoIndexInDetail = -1;
+    let currentView = 'gallery';
+    let previousViewBeforeDetail = 'gallery'; 
+    let mainMap = null;
+    let mainMapMarkers = [];
+    let currentFilteredPhotosForMap = [];
+    let lastDetailPhotoLocation = null;
 
     async function loadPhotoData() {
         try {
@@ -33,18 +47,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            allPhotosData = await response.json();
+            const rawPhotos = await response.json();
+            allPhotosData = await processAllPhotosExif(rawPhotos);
+            
             populateFilters();
-            currentFilteredPhotosForDetailView = [...allPhotosData];
-            initializeGallery();
+            showGalleryView(); 
         } catch (error) {
-            console.error("写真データの読み込みに失敗しました:", error);
-            photoGalleryContainer.innerHTML = '<p style="color: red; text-align: center;">写真データの読み込みに失敗しました。photos.jsonを確認してください。</p>';
+            console.error("写真データの読み込みまたはEXIF処理に失敗しました:", error);
+            photoGalleryContainer.innerHTML = '<p style="color: red; text-align: center;">写真データの読み込みに失敗しました。photos.jsonまたは画像ファイルを確認してください。</p>';
         }
     }
 
+    async function processAllPhotosExif(photos) {
+        const photosWithExifPromises = photos.map(async (photo) => {
+            const exif = await fetchExifDataWithExifJS(photo.realSrc);
+            return { ...photo, exif };
+        });
+        return Promise.all(photosWithExifPromises);
+    }
+
     function populateFilters() {
-        // ... (変更なし) ...
         filterList.innerHTML = '';
         const allFilterItem = document.createElement('li');
         allFilterItem.classList.add('filter-item', 'active');
@@ -67,16 +89,164 @@ document.addEventListener('DOMContentLoaded', () => {
             filterList.appendChild(filterItem);
         });
     }
-
-    function initializeGallery() {
+    
+    function showGalleryView() {
+        currentView = 'gallery';
         photoGalleryContainer.classList.add('active-content');
+        mapViewContainer.classList.remove('active-content');
         detailViewContainer.classList.remove('active-content');
-        displayPhotos(allPhotosData);
+
+        rightPaneHeaderTitle.textContent = '聖地写真ギャラリー';
+        
+        toggleMainViewButton.textContent = 'マップで表示';
+        toggleMainViewButton.style.display = 'inline-block';
+        returnToGalleryButton.style.display = 'none';
+        returnToMapButton.style.display = 'none';
+
+        const activeFilter = document.querySelector('#filter-list .filter-item.active');
+        const filterType = activeFilter ? activeFilter.dataset.filter : 'all';
+        filterAndDisplayPhotosInGallery(filterType);
+        // previousViewBeforeDetail は exitDetailViewAndSwitch で設定されるか、
+        // openDetailView の冒頭で、detail 以外のビューから来た場合に設定される。
+        // ここでは、このビューがアクティブになったことを示す。
     }
 
-    function displayPhotos(photosToDisplay) {
+    function showMapView() {
+        currentView = 'map';
+        photoGalleryContainer.classList.remove('active-content');
+        mapViewContainer.classList.add('active-content');
+        detailViewContainer.classList.remove('active-content');
+
+        rightPaneHeaderTitle.textContent = '聖地マップ';
+
+        toggleMainViewButton.textContent = 'ギャラリーで表示';
+        toggleMainViewButton.style.display = 'inline-block';
+        returnToGalleryButton.style.display = 'none';
+        returnToMapButton.style.display = 'none';
+
+        initializeMainMapAndPlotMarkers();
+
+        if (previousViewBeforeDetail === 'detail' && lastDetailPhotoLocation && mainMap) {
+            mainMap.setView(lastDetailPhotoLocation, 15); // ズームレベル15で中心を移動
+            // lastDetailPhotoLocation は一度使ったらクリアしても良いが、再度マップに戻る場合を考慮して残すこともできる。
+            // ここでは、詳細ビューを開くたびに上書きされるので、クリアは必須ではない。
+        }
+        // previousViewBeforeDetail の更新は exitDetailViewAndSwitch や openDetailView で行う
+    }
+
+    function initializeMainMapAndPlotMarkers() {
+        if (!mainMap) {
+            mainMapElement.innerHTML = ''; 
+            mainMap = L.map(mainMapElement).setView([36, 138], 5); 
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+            }).addTo(mainMap);
+        }
+        
+        const activeFilterItem = document.querySelector('#filter-list .filter-item.active');
+        const filterType = activeFilterItem ? activeFilterItem.dataset.filter : 'all';
+        currentFilteredPhotosForMap = (filterType === 'all')
+            ? allPhotosData.filter(photo => photo.exif && photo.exif.latitude && photo.exif.longitude)
+            : allPhotosData.filter(photo => photo.animeFilterTag === filterType && photo.exif && photo.exif.latitude && photo.exif.longitude);
+
+        plotMarkersOnMainMap(currentFilteredPhotosForMap);
+        
+        requestAnimationFrame(() => {
+            if (mainMap) mainMap.invalidateSize();
+        });
+    }
+    
+    function plotMarkersOnMainMap(photosToPlot) {
+        mainMapMarkers.forEach(marker => marker.remove());
+        mainMapMarkers = [];
+        const markerCoordinates = [];
+
+        const existingMessage = mainMapElement.querySelector('.map-message-overlay');
+        if (existingMessage) existingMessage.remove();
+
+        if (photosToPlot.length === 0) {
+            const messageOverlay = document.createElement('div');
+            messageOverlay.className = 'map-message-overlay';
+            messageOverlay.style.position = 'absolute';
+            messageOverlay.style.top = '50%';
+            messageOverlay.style.left = '50%';
+            messageOverlay.style.transform = 'translate(-50%, -50%)';
+            messageOverlay.style.padding = '20px';
+            messageOverlay.style.backgroundColor = 'rgba(255,255,255,0.8)';
+            messageOverlay.style.color = '#777';
+            messageOverlay.style.textAlign = 'center';
+            messageOverlay.style.zIndex = '1000';
+            messageOverlay.textContent = '表示できる位置情報付きの写真がありません。';
+            mainMapElement.appendChild(messageOverlay);
+
+            if(mainMap) mainMap.setView([36, 138], 5);
+            return;
+        }
+        
+        photosToPlot.forEach(photo => {
+            const marker = L.marker([photo.exif.latitude, photo.exif.longitude]);
+            const popupContent = `
+                <div>
+                    <img src="${photo.realSrc}" alt="${photo.title}" class="popup-thumbnail">
+                    <strong>${photo.title}</strong><br>
+                    アニメ: ${photo.animeTitleDisplay}<br>
+                    <a href="#" class="map-popup-detail-link" data-photo-id="${photo.id}">詳細を見る</a>
+                </div>`;
+            marker.bindPopup(popupContent);
+            
+            marker.on('popupopen', (e) => {
+                const popupNode = e.popup.getElement();
+                if (popupNode) {
+                    const detailLink = popupNode.querySelector('.map-popup-detail-link');
+                    if (detailLink) {
+                        const newDetailLink = detailLink.cloneNode(true);
+                        detailLink.parentNode.replaceChild(newDetailLink, detailLink);
+                        newDetailLink.addEventListener('click', (event) => {
+                            event.preventDefault();
+                            const photoId = parseInt(event.target.dataset.photoId);
+                            openDetailView(photoId);
+                            if (mainMap) mainMap.closePopup();
+                        });
+                    }
+                }
+            });
+
+            mainMapMarkers.push(marker);
+            markerCoordinates.push([photo.exif.latitude, photo.exif.longitude]);
+        });
+
+        // マーカーをマップに追加
+        if (mainMapMarkers.length > 0) {
+            L.featureGroup(mainMapMarkers).addTo(mainMap);
+        }
+
+        // 詳細から戻ってきた場合は、showMapView内でsetViewするので、ここではfitBoundsしない。
+        // それ以外の通常のマップ表示やフィルター変更時はfitBoundsを行う。
+        if (!(previousViewBeforeDetail === 'detail' && lastDetailPhotoLocation)) {
+            if (mainMapMarkers.length > 0) {
+                if (markerCoordinates.length > 1) {
+                    mainMap.fitBounds(L.latLngBounds(markerCoordinates).pad(0.2));
+                } else if (markerCoordinates.length === 1) {
+                    mainMap.setView(markerCoordinates[0], 12); 
+                }
+            } else { 
+                if(mainMap) mainMap.setView([36, 138], 5); 
+            }
+        }
+        // previousViewBeforeDetail === 'detail' の場合は、マーカーはプロット済みで、
+        // 中心位置は showMapView の中で lastDetailPhotoLocation を使って設定される。
+    }
+
+    function filterAndDisplayPhotosInGallery(filterType) {
+        currentFilteredPhotosForGallery = (filterType === 'all' || !filterType) 
+            ? [...allPhotosData] 
+            : allPhotosData.filter(photo => photo.animeFilterTag === filterType);
+        displayPhotosInGallery(currentFilteredPhotosForGallery);
+    }
+
+    function displayPhotosInGallery(photosToDisplay) {
         photoGalleryContainer.innerHTML = '';
-        currentFilteredPhotosForDetailView = [...photosToDisplay];
         photosToDisplay.forEach(photo => {
             const tile = document.createElement('div');
             tile.classList.add('photo-tile');
@@ -95,7 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchExifDataWithExifJS(imageSrc) {
-        // ... (変更なし) ...
         return new Promise((resolve) => {
             const img = new Image();
             img.crossOrigin = "Anonymous";
@@ -107,12 +276,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
                     let dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
                     let exifInfo = { latitude: null, longitude: null, dateTimeOriginal: null, error: null };
+
                     if (lat && lon && latRef && lonRef && lat.length === 3 && lon.length === 3) {
                         exifInfo.latitude = convertDMSToDD(lat[0].valueOf(), lat[1].valueOf(), lat[2].valueOf(), latRef);
                         exifInfo.longitude = convertDMSToDD(lon[0].valueOf(), lon[1].valueOf(), lon[2].valueOf(), lonRef);
                     } else {
                         if (!exifInfo.error) exifInfo.error = "位置情報なし";
                     }
+
                     if (dateTimeOriginal) {
                         const parts = dateTimeOriginal.split(" ");
                         if (parts.length === 2) {
@@ -136,14 +307,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             };
             img.onerror = function() {
-                resolve({ latitude: null, longitude: null, dateTimeOriginal: null, error: "画像読み込み失敗" });
+                resolve({ latitude: null, longitude: null, dateTimeOriginal: null, error: "画像読み込み失敗、EXIF取得不可" });
             }
             img.src = imageSrc;
         });
     }
 
     function convertDMSToDD(degrees, minutes, seconds, direction) {
-        // ... (変更なし) ...
         let dd = parseFloat(degrees) + parseFloat(minutes) / 60 + parseFloat(seconds) / (60 * 60);
         if (direction == "S" || direction == "W") { dd = dd * -1; }
         return dd;
@@ -152,45 +322,61 @@ document.addEventListener('DOMContentLoaded', () => {
     async function openDetailView(photoId) {
         const newPhotoId = parseInt(photoId);
         currentPhotoData = allPhotosData.find(p => p.id === newPhotoId);
-        if (!currentPhotoData) return;
-
-        // ★変更: 現在の写真のインデックスを更新
-        currentPhotoIndexInDetail = currentFilteredPhotosForDetailView.findIndex(p => p.id === newPhotoId);
-
-        if (!detailViewContainer.classList.contains('active-content')) {
-            photoGalleryContainer.classList.remove('active-content');
-            detailViewContainer.classList.add('active-content');
-            closeDetailViewButton.style.display = 'inline-block';
+        
+        if (!currentPhotoData) {
+            console.error("openDetailView: 指定された photoId のデータが見つかりません:", newPhotoId);
+            return;
         }
+
+        if (currentPhotoData.exif && currentPhotoData.exif.latitude && currentPhotoData.exif.longitude) {
+            lastDetailPhotoLocation = [currentPhotoData.exif.latitude, currentPhotoData.exif.longitude];
+        } else {
+            lastDetailPhotoLocation = null;
+        }
+
+        if (currentView !== 'detail') { // detailビューに遷移する直前のビューを記録
+            previousViewBeforeDetail = currentView; 
+        }
+        currentView = 'detail'; // 現在のビューを 'detail' に更新
+        
+        let photosForDetailContext;
+        // previousViewBeforeDetail は 'gallery' または 'map' のはず
+        if (previousViewBeforeDetail === 'map') { 
+            photosForDetailContext = [...currentFilteredPhotosForMap];
+        } else { 
+            photosForDetailContext = [...currentFilteredPhotosForGallery];
+        }
+        currentPhotoIndexInDetail = photosForDetailContext.findIndex(p => p.id === newPhotoId);
+
+        photoGalleryContainer.classList.remove('active-content');
+        mapViewContainer.classList.remove('active-content');
+        detailViewContainer.classList.add('active-content');
+        
         rightPaneHeaderTitle.textContent = currentPhotoData.title;
 
-        // ... (残りの詳細情報設定は変更なし) ...
-        isRealImageDisplayedInSingleView = true;
+        toggleMainViewButton.style.display = 'none'; 
+        returnToGalleryButton.style.display = 'inline-block';
+        returnToMapButton.style.display = 'inline-block';
+        
+        isRealImageDisplayedInSingleView = true; 
         detailModalImage.src = currentPhotoData.realSrc;
         detailSbsAnimeImage.src = currentPhotoData.animeSrc;
         detailSbsRealImage.src = currentPhotoData.realSrc;
-        switchToDetailSingleView();
+        switchToDetailSingleView(); 
 
         detailTitle.textContent = currentPhotoData.title;
         detailAnimeTitleDisplay.textContent = `アニメ: ${currentPhotoData.animeTitleDisplay}`;
         detailPhotoDescription.value = currentPhotoData.description;
-
         detailMapElement.innerHTML = '<p style="text-align:center; padding-top: 20px; color: #777;">位置情報を読み込み中...</p>';
         detailStreetviewLink.style.display = 'none';
         detailDatetimeOriginal.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 日時情報読み込み中...';
-
-        if (detailMap) {
-            detailMap.remove();
-            detailMap = null;
-        }
+        if (detailMap) { detailMap.remove(); detailMap = null; }
         currentMapMarker = null;
-
-        const exifInfo = await fetchExifDataWithExifJS(currentPhotoData.realSrc);
+        const exifInfo = currentPhotoData.exif; 
         let mapErrorMessage = exifInfo.error || "位置情報はありません。";
-
         if (exifInfo.latitude && exifInfo.longitude) {
             requestAnimationFrame(() => {
-                setupMap(exifInfo.latitude, exifInfo.longitude, currentPhotoData.title);
+                setupDetailMap(exifInfo.latitude, exifInfo.longitude, currentPhotoData.title);
                 const streetViewUrl = `https://www.google.com/maps?q&layer=c&cbll=${exifInfo.latitude},${exifInfo.longitude}`;
                 detailStreetviewLink.href = streetViewUrl;
                 detailStreetviewLink.style.display = 'inline-block';
@@ -199,7 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             detailMapElement.innerHTML = `<p style="text-align:center; padding-top: 20px; color: #777;">${mapErrorMessage}</p>`;
         }
-
         if (exifInfo.dateTimeOriginal) {
             try {
                 const date = new Date(exifInfo.dateTimeOriginal);
@@ -207,48 +392,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Tokyo' };
                 detailDatetimeOriginal.innerHTML = `<i class="far fa-calendar-alt"></i> 撮影日時: ${date.toLocaleString('ja-JP', options)}`;
             } catch(e) {
-                detailDatetimeOriginal.innerHTML = `<i class="far fa-calendar-alt"></i> 撮影日時: ${exifInfo.dateTimeOriginal || '取得エラー'} (書式エラー)`;
+                detailDatetimeOriginal.innerHTML = `<i class="far fa-calendar-alt"></i> 撮影日時: ${exifInfo.dateTimeOriginal || '取得エラー'} (書式エラーの可能性あり)`;
             }
         } else if (exifInfo.error && exifInfo.error.includes("日時情報")) {
              detailDatetimeOriginal.innerHTML = `<i class="far fa-calendar-alt"></i> 日時情報: ${exifInfo.error}`;
         } else {
             detailDatetimeOriginal.innerHTML = `<i class="far fa-calendar-alt"></i> 撮影日時情報はありません。`;
         }
-
-        populateDetailThumbnails(newPhotoId);
+        populateDetailThumbnails(newPhotoId, photosForDetailContext);
     }
 
-    function setupMap(lat, lon, title) {
-        // ... (変更なし) ...
+    function setupDetailMap(lat, lon, title) {
         detailMapElement.innerHTML = '';
         detailMap = L.map(detailMapElement, { attributionControl: false });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(detailMap);
-        L.control.attribution({prefix: '<a href="https://leafletjs.com" target="_blank">Leaflet</a> | © <a href="http://osm.org/copyright" target="_blank">OSM</a>'}).addTo(detailMap);
+        L.control.attribution({prefix: '<a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> | © <a href="http://osm.org/copyright">OSM</a>'}).addTo(detailMap);
         currentMapMarker = L.marker([lat, lon]).addTo(detailMap).bindPopup(title || '撮影場所');
-        detailMap.setView([lat, lon], 12);
-        detailMap.invalidateSize();
-        currentMapMarker.openPopup();
+        detailMap.setView([lat, lon], 12); 
+        
+        setTimeout(() => {
+            if (detailMap) detailMap.invalidateSize();
+            if (currentMapMarker) currentMapMarker.openPopup();
+        }, 100);
     }
+    
+    function exitDetailViewAndSwitch(targetView) {
+        previousViewBeforeDetail = currentView; // 'detail' を記録 (これが重要)
 
-    function closeDetailView() {
-        // ... (変更なし) ...
         detailViewContainer.classList.remove('active-content');
-        photoGalleryContainer.classList.add('active-content');
-        rightPaneHeaderTitle.textContent = '聖地写真ギャラリー';
-        closeDetailViewButton.style.display = 'none';
+        
         currentPhotoData = null;
-        currentPhotoIndexInDetail = -1; // ★リセット
-        if (detailMap) {
-            detailMap.remove();
-            detailMap = null;
-        }
+        currentPhotoIndexInDetail = -1;
+        // lastDetailPhotoLocation は showMapView で参照されるので、ここではクリアしない
+
+        if (detailMap) { detailMap.remove(); detailMap = null; }
         currentMapMarker = null;
         detailThumbnailList.innerHTML = '';
+
+        if (targetView === 'map') {
+            showMapView();
+        } else { 
+            showGalleryView();
+        }
     }
-    closeDetailViewButton.addEventListener('click', closeDetailView);
 
     function switchToDetailSingleView() {
-        // ... (変更なし) ...
         detailSingleImageView.classList.add('active-detail-image-display');
         detailSideBySideView.classList.remove('active-detail-image-display');
         detailToggleComparisonButton.textContent = '左右で比較する';
@@ -256,7 +444,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function switchToDetailSideBySideView() {
-        // ... (変更なし) ...
         detailSingleImageView.classList.remove('active-detail-image-display');
         detailSideBySideView.classList.add('active-detail-image-display');
         detailToggleComparisonButton.textContent = '1枚表示に戻す';
@@ -264,8 +451,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     detailModalImage.addEventListener('click', () => {
-        // ... (変更なし) ...
-        if (!currentPhotoData || isDetailSideBySideActive) return;
+        if (!currentPhotoData) return;
+        if (isDetailSideBySideActive) return; 
+
         if (isRealImageDisplayedInSingleView) {
             detailModalImage.src = currentPhotoData.animeSrc;
         } else {
@@ -275,8 +463,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     detailToggleComparisonButton.addEventListener('click', () => {
-        // ... (変更なし) ...
         if (!currentPhotoData) return;
+
         if (isDetailSideBySideActive) {
             switchToDetailSingleView();
         } else {
@@ -285,30 +473,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     filterList.addEventListener('click', (event) => {
-        // ... (変更なし) ...
         if (event.target.tagName === 'LI') {
-            if (detailViewContainer.classList.contains('active-content')) {
-                closeDetailView();
-            }
             document.querySelectorAll('#filter-list .filter-item').forEach(item => item.classList.remove('active'));
             event.target.classList.add('active');
             const filterType = event.target.dataset.filter;
-            let filteredPhotos = (filterType === 'all') ? allPhotosData : allPhotosData.filter(photo => photo.animeFilterTag === filterType);
-            displayPhotos(filteredPhotos);
+
+            if (currentView === 'detail') {
+                // 詳細表示中にフィルター変更 → ギャラリーに戻ってフィルター適用
+                exitDetailViewAndSwitch('gallery'); 
+            } else if (currentView === 'map') {
+                // マップ表示中にフィルター変更 → マップを更新
+                // この時、詳細から戻ったわけではないので、fitBoundsを優先
+                previousViewBeforeDetail = 'map'; // fitBoundsの挙動制御のため
+                lastDetailPhotoLocation = null;   // fitBoundsを優先させる
+                
+                currentFilteredPhotosForMap = (filterType === 'all')
+                    ? allPhotosData.filter(photo => photo.exif && photo.exif.latitude && photo.exif.longitude)
+                    : allPhotosData.filter(photo => photo.animeFilterTag === filterType && photo.exif && photo.exif.latitude && photo.exif.longitude);
+                plotMarkersOnMainMap(currentFilteredPhotosForMap); // ここでfitBounds等が起こる
+                if (mainMap) mainMap.invalidateSize();
+            } else if (currentView === 'gallery') {
+                filterAndDisplayPhotosInGallery(filterType);
+            }
+        }
+    });
+    
+    toggleMainViewButton.addEventListener('click', () => {
+        if (currentView === 'gallery') {
+            previousViewBeforeDetail = 'gallery'; // ギャラリーからマップへ
+            lastDetailPhotoLocation = null; // fitBoundsを優先させる
+            showMapView();
+        } else if (currentView === 'map') {
+            previousViewBeforeDetail = 'map'; // マップからギャラリーへ
+            showGalleryView();
         }
     });
 
-    function populateDetailThumbnails(activePhotoId) {
-        // ... (変更なし) ...
-        detailThumbnailList.innerHTML = '';
+    returnToGalleryButton.addEventListener('click', () => {
+        exitDetailViewAndSwitch('gallery');
+    });
 
-        currentFilteredPhotosForDetailView.forEach(photo => {
+    returnToMapButton.addEventListener('click', () => {
+        exitDetailViewAndSwitch('map');
+    });
+
+    function populateDetailThumbnails(activePhotoId, photosForContext) {
+        detailThumbnailList.innerHTML = '';
+        photosForContext.forEach(photo => {
             const thumbItem = document.createElement('div');
             thumbItem.classList.add('detail-thumbnail-item');
             thumbItem.dataset.photoId = photo.id;
-            // ★追加: キーボード操作のために tabindex を設定
             thumbItem.setAttribute('tabindex', '0');
-
 
             const img = document.createElement('img');
             img.src = photo.realSrc;
@@ -320,15 +535,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             thumbItem.addEventListener('click', () => {
-                if (photo.id !== currentPhotoData.id) {
-                    openDetailView(photo.id);
+                if (photo.id !== (currentPhotoData ? currentPhotoData.id : -1) ) {
+                    openDetailView(photo.id); 
                 }
             });
-            // ★追加: Enterキーでもクリックと同様の動作
             thumbItem.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    e.preventDefault(); // デフォルトの動作（あれば）を抑制
-                    if (photo.id !== currentPhotoData.id) {
+                    e.preventDefault();
+                    if (photo.id !== (currentPhotoData ? currentPhotoData.id : -1) ) {
                         openDetailView(photo.id);
                     }
                 }
@@ -342,11 +556,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ★追加: キーボードナビゲーション処理
     document.addEventListener('keydown', (event) => {
-        // 詳細ビューが表示されていない、または入力フィールドにフォーカスがある場合は何もしない
-        if (!detailViewContainer.classList.contains('active-content') || 
-            ['input', 'textarea'].includes(event.target.tagName.toLowerCase())) {
+        if (currentView !== 'detail' || ['input', 'textarea'].includes(event.target.tagName.toLowerCase())) {
+            return;
+        }
+        
+        let photosForNavContext;
+        const contextSourceView = previousViewBeforeDetail; 
+        if (contextSourceView === 'map') {
+            photosForNavContext = [...currentFilteredPhotosForMap];
+        } else {
+            photosForNavContext = [...currentFilteredPhotosForGallery];
+        }
+
+        if (currentPhotoIndexInDetail < 0 || currentPhotoIndexInDetail >= photosForNavContext.length) {
             return;
         }
 
@@ -359,18 +582,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 navigated = true;
             }
         } else if (event.key === 'ArrowRight') {
-            if (currentPhotoIndexInDetail < currentFilteredPhotosForDetailView.length - 1) {
+            if (currentPhotoIndexInDetail < photosForNavContext.length - 1) {
                 newIndex = currentPhotoIndexInDetail + 1;
                 navigated = true;
             }
         }
 
         if (navigated && newIndex !== currentPhotoIndexInDetail) {
-            event.preventDefault(); // 矢印キーによるページのスクロールを防ぐ
-            const nextPhotoId = currentFilteredPhotosForDetailView[newIndex].id;
-            openDetailView(nextPhotoId);
+            event.preventDefault();
+            const nextPhotoId = photosForNavContext[newIndex].id;
+            openDetailView(nextPhotoId); 
 
-            // 新しく選択されたサムネイルにフォーカスを当てる（オプション）
             const newActiveThumb = detailThumbnailList.querySelector(`.detail-thumbnail-item[data-photo-id="${nextPhotoId}"]`);
             if (newActiveThumb) {
                 newActiveThumb.focus();
@@ -378,99 +600,75 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
-    // ホイールナビゲーション関連の変数
-    let canNavigateByWheel = true; // ホイールナビゲーションが可能かどうかのフラグ
-    const WHEEL_NAVIGATION_COOLDOWN = 300; // ms, ナビゲーション後のクールダウンタイム (少し長めに設定)
-
+    let canNavigateByWheel = true;
+    const WHEEL_NAVIGATION_COOLDOWN = 300;
     detailViewContainer.addEventListener('wheel', (event) => {
-        // 詳細ビューが表示されていない場合は何もしない
-        if (!detailViewContainer.classList.contains('active-content')) {
-            return;
-        }
+        if (currentView !== 'detail') return;
 
         const target = event.target;
         const infoPane = document.getElementById('detail-view-info-pane');
         const photoDescription = document.getElementById('detail-photo-description');
         const thumbnailList = document.getElementById('detail-thumbnail-list');
-        const mapElement = document.getElementById('detail-map-element');
+        const mapInDetail = document.getElementById('detail-map-element'); 
 
-        // textarea, thumbnail-list, map要素、またはLeafletのインタラクティブな要素上では
-        // デフォルトのホイール動作を優先し、画像ナビゲーションを行わない
         if (photoDescription.contains(target) || 
             thumbnailList.contains(target) ||
-            mapElement.contains(target) ||
+            mapInDetail.contains(target) || 
             (target.closest && (
-                target.closest('.leaflet-map-pane') || // 地図のタイルやマーカーなど
-                target.closest('.leaflet-control')    // 地図のコントロール（ズームボタンなど）
+                target.closest('.leaflet-map-pane') || 
+                target.closest('.leaflet-control')
             ))) {
             return;
         }
 
-        // infoPane (情報表示ペイン) がスクロール可能な場合、そのスクロールを優先
         if (infoPane.contains(target) && infoPane.scrollHeight > infoPane.clientHeight) {
             const isScrollingUp = event.deltaY < 0;
             const isAtTop = infoPane.scrollTop === 0;
-            const isAtBottom = infoPane.scrollTop >= (infoPane.scrollHeight - infoPane.clientHeight - 1); // -1 for safety
-
-            if (isScrollingUp && !isAtTop) { // 上にスクロールしようとしていて、まだ上にスクロールできる
+            const isAtBottom = infoPane.scrollTop >= (infoPane.scrollHeight - infoPane.clientHeight - 1);
+            if ((isScrollingUp && !isAtTop) || (!isScrollingUp && !isAtBottom)) {
                 return;
             }
-            if (!isScrollingUp && !isAtBottom) { // 下にスクロールしようとしていて、まだ下にスクロールできる
-                return;
-            }
-            // ここまで来た場合は、infoPaneはスクロール可能だが、既に端に達している
         }
         
-        // Y軸方向のホイール移動がない場合は何もしない (例: 横スクロールのみのトラックパッド操作)
-        if (event.deltaY === 0) {
+        if (event.deltaY === 0) return;
+        if (!canNavigateByWheel) { event.preventDefault(); return; }
+        
+        let photosForNavContext;
+        const contextSourceView = previousViewBeforeDetail;
+        if (contextSourceView === 'map') {
+            photosForNavContext = [...currentFilteredPhotosForMap];
+        } else {
+            photosForNavContext = [...currentFilteredPhotosForGallery];
+        }
+        
+        if (currentPhotoIndexInDetail < 0 || currentPhotoIndexInDetail >= photosForNavContext.length) {
             return;
         }
 
-        // ナビゲーションクールダウン中なら、ページのスクロールだけを防いでリターン
-        if (!canNavigateByWheel) {
-            event.preventDefault();
-            return;
-        }
-        
-        // 上記の条件に当てはまらなければ、画像ナビゲーションを試みる
         let newIndex = currentPhotoIndexInDetail;
         let performNavigation = false;
 
-        if (event.deltaY < 0) { // ホイールを上に回した場合 (前の画像へ)
+        if (event.deltaY < 0) {
             if (currentPhotoIndexInDetail > 0) {
                 newIndex = currentPhotoIndexInDetail - 1;
                 performNavigation = true;
             }
-        } else if (event.deltaY > 0) { // ホイールを下に回した場合 (次の画像へ)
-            if (currentPhotoIndexInDetail < currentFilteredPhotosForDetailView.length - 1) {
+        } else if (event.deltaY > 0) {
+            if (currentPhotoIndexInDetail < photosForNavContext.length - 1) {
                 newIndex = currentPhotoIndexInDetail + 1;
                 performNavigation = true;
             }
         }
 
         if (performNavigation) {
-            event.preventDefault(); // 画像ナビゲーションを行うので、ページのスクロールを防ぐ
-            canNavigateByWheel = false; // ナビゲーション実行、クールダウン開始
-
-            const nextPhotoId = currentFilteredPhotosForDetailView[newIndex].id;
-            // openDetailView は async 関数なので Promise を返す
-            openDetailView(nextPhotoId).then(() => {
-                // openDetailView内でpopulateDetailThumbnailsが呼ばれ、
-                // アクティブなサムネイルはscrollIntoViewされる。
-                // マウス操作なので、キーボード操作時のような明示的なfocus()はここでは行わない。
-            }).catch(error => {
-                console.error("Error during wheel navigation:", error);
-            }).finally(() => {
-                // ナビゲーションが成功しても失敗しても、クールダウンタイマーを設定
-                setTimeout(() => {
-                    canNavigateByWheel = true; // クールダウン終了
-                }, WHEEL_NAVIGATION_COOLDOWN);
+            event.preventDefault();
+            canNavigateByWheel = false;
+            const nextPhotoId = photosForNavContext[newIndex].id;
+            Promise.resolve(openDetailView(nextPhotoId)).finally(() => {
+                setTimeout(() => { canNavigateByWheel = true; }, WHEEL_NAVIGATION_COOLDOWN);
             });
         }
-        }, { passive: false });
-
-
+    }, { passive: false });
 
     loadPhotoData();
 });
