@@ -258,5 +258,25 @@
     "description": "13話",
     "animeTitleDisplay": "宇宙よりも遠い場所",
     "uploadedAt": "2025-06-01T04:28:54.928Z"
+  },
+    {
+    "id": 27,
+    "realSrc": "https://radicalstep.github.io/lab/images/hirayu_terminal.jpeg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/hirayu.jpg",
+    "title": "平湯バスターミナル",
+    "animeFilterTag": "hyouka",
+    "description": "第7話",
+    "animeTitleDisplay": "古典部シリーズ",
+    "uploadedAt": "2025-06-02T06:32:36.361Z"
+  },
+      {
+    "id": 28,
+    "realSrc": "https://radicalstep.github.io/lab/images/piper.jpeg",
+    "animeSrc": "https://radicalstep.github.io/lab/images/pipe.jpg",
+    "title": "バグパイプ",
+    "animeFilterTag": "hyouka",
+    "description": "第2話",
+    "animeTitleDisplay": "古典部シリーズ",
+    "uploadedAt": "2025-06-02T06:32:36.361Z"
   }
 ]
