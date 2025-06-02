@@ -700,70 +700,70 @@ class PhotoApp {
         this._updateHeaderAndControls();
     }
 
-    switchToView(viewName) {
-        const previousActualView = this.currentView; // Capture the view before switching
-        
-        if (this.currentView === 'detail') {
-            this.detailView.hideAndCleanup();
-        }
-        
-        // Save map state if switching from map to gallery
-        if (previousActualView === 'map' && viewName === 'gallery' && this.mapView.mainMap) {
-            const currentMapState = this.mapView.getCurrentViewState();
-            if (currentMapState) {
-                this.mapLastCenter = [currentMapState.center.lat, currentMapState.center.lng];
-                this.mapLastZoom = currentMapState.zoom;
-            }
-        }
-
-        this.currentView = viewName; // Update current view
-        
-        // Hide all main views first
-        this.galleryView.hide();
-        this.mapView.hide();
-        // Detail view is hidden by its own hideAndCleanup or if openDetailView is called
-
-        if (viewName === 'gallery') {
-            this.dom.rightPaneHeaderTitle.textContent = '聖地写真ギャラリー';
-            this.galleryView.displayPhotos(this.currentFilteredPhotos); // Always use current filtered photos
-            this.galleryView.show();
-        } else if (viewName === 'map') {
-            this.dom.rightPaneHeaderTitle.textContent = '聖地マップ';
-            this.mapView.initializeMap(); // Ensure map instance exists
-
-            const photosForMap = this.currentFilteredPhotos.filter(p => p.exif && p.exif.latitude && p.exif.longitude);
-            const markerCoordinates = photosForMap.length > 0 ? photosForMap.map(p => [p.exif.latitude, p.exif.longitude]) : [];
-
-            if (this.isFirstMapLoad) {
-                this.mapView.mainMap.setView([36, 138], 7);
-                this.isFirstMapLoad = false;
-            } else if (this.lastDetailPhotoLocation && previousActualView === 'detail') {
-                // Coming from detail view to map
-                this.mapView.mainMap.setView(this.lastDetailPhotoLocation, 15); 
-            } else if (this.mapShouldFitBounds) {
-                // Filter changed or other reason to fit bounds
-                if (markerCoordinates.length > 1) {
-                    this.mapView.mainMap.fitBounds(L.latLngBounds(markerCoordinates).pad(0.2));
-                } else if (markerCoordinates.length === 1) {
-                    this.mapView.mainMap.setView(markerCoordinates[0], 12);
-                } else { 
-                    // No markers, but fitBounds was requested (e.g., filter yields no results)
-                    // Fallback to last known view or a default view
-                    this.mapView.mainMap.setView(this.mapLastCenter, this.mapLastZoom); 
-                }
-                this.mapShouldFitBounds = false; // Reset flag
-            } else {
-                // Restoring map view (e.g., from gallery to map toggle)
-                this.mapView.mainMap.setView(this.mapLastCenter, this.mapLastZoom);
-            }
-
-            this.mapView.plotMarkers(photosForMap); // Plot markers after view is set
-            this.mapView.show();
-            this.mapView.invalidateSize(); // Ensure map renders correctly after being shown
-        }
-        
-        this._updateHeaderAndControls();
+// PhotoApp クラスの switchToView メソッド
+switchToView(viewName) {
+    const previousActualView = this.currentView; // Capture the view before switching
+    
+    if (this.currentView === 'detail') {
+        this.detailView.hideAndCleanup();
     }
+    
+    if (previousActualView === 'map' && viewName === 'gallery' && this.mapView.mainMap) {
+        const currentMapState = this.mapView.getCurrentViewState();
+        if (currentMapState) {
+            this.mapLastCenter = [currentMapState.center.lat, currentMapState.center.lng];
+            this.mapLastZoom = currentMapState.zoom;
+        }
+    }
+
+    this.currentView = viewName;
+    
+    this.galleryView.hide();
+    this.mapView.hide();
+
+    if (viewName === 'gallery') {
+        this.dom.rightPaneHeaderTitle.textContent = '聖地写真ギャラリー';
+        this.galleryView.displayPhotos(this.currentFilteredPhotos);
+        this.galleryView.show();
+    } else if (viewName === 'map') {
+        this.dom.rightPaneHeaderTitle.textContent = '聖地マップ';
+        this.mapView.initializeMap(); 
+
+        const photosForMap = this.currentFilteredPhotos.filter(p => p.exif && p.exif.latitude && p.exif.longitude);
+        const markerCoordinates = photosForMap.length > 0 ? photosForMap.map(p => [p.exif.latitude, p.exif.longitude]) : [];
+
+        // --- ▼ここからロジック修正▼ ---
+        if (previousActualView === 'detail' && this.lastDetailPhotoLocation) {
+            // 1. 詳細ビューからマップへ遷移する場合 (最優先)
+            this.mapView.mainMap.setView(this.lastDetailPhotoLocation, 15);
+            this.isFirstMapLoad = false; // マップが一度表示されたことになる
+        } else if (this.isFirstMapLoad) {
+            // 2. 初回マップロードの場合
+            this.mapView.mainMap.setView([36, 138], 7);
+            this.isFirstMapLoad = false;
+        } else if (this.mapShouldFitBounds) {
+            // 3. フィルター変更などでフィットバウンズが必要な場合
+            if (markerCoordinates.length > 1) {
+                this.mapView.mainMap.fitBounds(L.latLngBounds(markerCoordinates).pad(0.2));
+            } else if (markerCoordinates.length === 1) {
+                this.mapView.mainMap.setView(markerCoordinates[0], 12);
+            } else { 
+                this.mapView.mainMap.setView(this.mapLastCenter, this.mapLastZoom); 
+            }
+            this.mapShouldFitBounds = false;
+        } else {
+            // 4. 上記以外 (ギャラリーからマップへ遷移し、保存された状態を復元する場合など)
+            this.mapView.mainMap.setView(this.mapLastCenter, this.mapLastZoom);
+        }
+        // --- ▲ここまでロジック修正▲ ---
+
+        this.mapView.plotMarkers(photosForMap);
+        this.mapView.show();
+        this.mapView.invalidateSize();
+    }
+    
+    this._updateHeaderAndControls();
+}
 
     _updateHeaderAndControls() {
         if (this.currentView === 'gallery') {
