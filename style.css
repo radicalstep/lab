@@ -721,3 +721,17 @@ body {
         height: 55px;
     }
 }
+
+/* 詳細ビューの地図ポップアップのスタイル調整 */
+#detail-map-element .leaflet-popup-content-wrapper {
+    /* width: auto !important; /* これだけだと効果が薄い場合がある */
+    border-radius: 8px; /* 見た目を少し調整 */
+}
+
+#detail-map-element .leaflet-popup-content {
+    margin: 10px 15px !important; /* Leafletのデフォルトマージンを少し調整 */
+    min-width: 50px !important; /* あまりにも小さくなりすぎないように最小幅を設定 */
+    /* max-width を設定したい場合はここに追加 (例: max-width: 250px !important;) */
+    white-space: nowrap; /* 地名が短い場合は折り返さないようにする */
+    font-size: 13px; /* フォントサイズ調整 (任意) */
+}
