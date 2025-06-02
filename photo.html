@@ -18,10 +18,21 @@
         <main id="right-pane">
             <header>
                 <h1 id="right-pane-header-title">聖地写真ギャラリー</h1>
-                <button id="close-detail-view-button" style="display: none;">× ギャラリーに戻る</button>
+                <div class="header-buttons">
+                    <!-- 通常表示時のボタン -->
+                    <button id="toggle-main-view-button">マップで表示</button> <!-- IDとテキストはJSで動的に変更 -->
+                    <!-- 詳細表示中の戻るボタン -->
+                    <button id="return-to-gallery-button" style="display: none;">ギャラリーに戻る</button>
+                    <button id="return-to-map-button" style="display: none;">マップに戻る</button>
+                </div>
             </header>
 
             <div id="photo-gallery-container" class="content-view">
+                <!-- 写真タイルはJSで生成 -->
+            </div>
+
+            <div id="map-view-container" class="content-view">
+                <div id="main-map-element"></div>
             </div>
 
             <div id="detail-view-container" class="content-view">
@@ -58,13 +69,11 @@
                             <i class="fas fa-street-view"></i> ストリートビューで見る
                         </a>
                     </div>
-                    <!-- ★ここから追加: サムネイルリスト表示エリア -->
                     <div id="detail-thumbnail-area">
                         <h3><i class="fas fa-images"></i> 他の写真</h3>
                         <div id="detail-thumbnail-list">
                         </div>
                     </div>
-                    <!-- ★ここまで追加 -->
                 </div>
             </div>
         </main>
