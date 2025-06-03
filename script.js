@@ -26,6 +26,7 @@ class PhotoDataService {
         }
     }
 
+    // 内部メソッド: 全ての写真データに対してEXIF情報を非同期に取得・処理します。
     async _processAllPhotosExif(photos) {
         const photosWithExifPromises = photos.map(async(photo) => {
             const exif = await this._fetchExifDataWithExifJS(photo.realSrc);
@@ -36,6 +37,7 @@ class PhotoDataService {
         return Promise.all(photosWithExifPromises);
     }
 
+    // 内部メソッド: ExifJSを使用して指定された画像ソースからEXIFデータを取得します。
     _fetchExifDataWithExifJS(imageSrc) {
         return new Promise((resolve) => {
             const img = new Image();
@@ -95,6 +97,12 @@ class PhotoDataService {
         });
     }
 
+    // 度分秒(DMS)形式の地理座標を十進度(DD)形式に変換します。
+    // @param {number} degrees - 度。
+    // @param {number} minutes - 分。
+    // @param {number} seconds - 秒。
+    // @param {string} direction - 方向指示子 ("N", "S", "E", "W")。
+    // @returns {number} 十進度形式の座標。
     static _convertDMSToDD(degrees, minutes, seconds, direction) {
         let dd = parseFloat(degrees) + parseFloat(minutes) / 60 + parseFloat(seconds) / (60 * 60);
         if (direction === "S" || direction === "W") {
@@ -103,48 +111,65 @@ class PhotoDataService {
         return dd;
     }
 
+    // 全ての写真データのコピーを返します。
+    // @returns {Array<Object>} 写真データの配列。
     getAllPhotos() {
         return [...this.allPhotosData];
     }
 
+    // 指定されたIDの写真データを返します。
+    // @param {string|number} id - 写真のID。
+    // @returns {Object|undefined} 写真データ、見つからない場合はundefined。
     getPhotoById(id) {
         const photoId = parseInt(id);
         return this.allPhotosData.find(p => p.id === photoId);
     }
 }
 
+// ビューの基本クラス。表示/非表示/クリア機能を提供します。
 class View {
+    // Viewのインスタンスを初期化します。
+    // @param {HTMLElement} containerElement - ビューのコンテナとなるDOM要素。
     constructor(containerElement) {
         if (!containerElement) {
             throw new Error("View constructor requires a containerElement.");
         }
         this.containerElement = containerElement;
     }
+    // ビューを表示状態にします。
     show() {
         this.containerElement.classList.add('active-content');
         this.containerElement.style.display = '';
     }
+    // ビューを非表示状態にします。
     hide() {
         this.containerElement.classList.remove('active-content');
         this.containerElement.style.display = 'none';
     }
+    // ビューの内容をクリアします。
     clear() {
         this.containerElement.innerHTML = '';
     }
 }
 
+// フィルターUIの管理とフィルター変更イベントの処理を行うクラス。
 class FilterManager {
+    // FilterManagerのインスタンスを初期化します。
+    // @param {HTMLElement} filterListElement - フィルター項目を表示するリスト要素。
+    // @param {Function} onFilterChangeCallback - フィルターが変更されたときに呼び出されるコールバック関数。
     constructor(filterListElement, onFilterChangeCallback) {
         this.filterListElement = filterListElement;
         this.onFilterChange = onFilterChangeCallback;
         this._initEventListeners();
     }
+
+    // 提供された写真データに基づいてフィルターリストを生成します。
+    // @param {Array<Object>} allPhotosData - 全ての写真データの配列。
     populateFilters(allPhotosData) {
         this.filterListElement.innerHTML = '';
         const allFilterItem = this._createFilterItem('すべて', 'all', true);
         this.filterListElement.appendChild(allFilterItem);
 
-        // Mapを使用して重複を避けつつ、animeFilterTag と animeTitleDisplay を効率的に収集
         const animeFilterMap = new Map();
         allPhotosData.forEach(photo => {
             if (photo.animeFilterTag && !animeFilterMap.has(photo.animeFilterTag)) {
@@ -152,7 +177,6 @@ class FilterManager {
             }
         });
 
-        // Mapから配列に変換し、表示名でソート
         const animeFilters = Array.from(animeFilterMap.entries())
             .map(([tag, display]) => ({ tag, display }))
             .sort((a, b) => a.display.localeCompare(b.display, 'ja'));
@@ -162,6 +186,8 @@ class FilterManager {
             this.filterListElement.appendChild(filterItem);
         });
     }
+
+    // 内部メソッド: 単一のフィルター項目DOM要素を作成します。
     _createFilterItem(text, filterValue, isActive = false) {
         const filterItem = document.createElement('li');
         filterItem.classList.add('filter-item');
@@ -172,6 +198,8 @@ class FilterManager {
         filterItem.textContent = text;
         return filterItem;
     }
+
+    // 内部メソッド: フィルターリストのクリックイベントリスナーを初期化します。
     _initEventListeners() {
         this.filterListElement.addEventListener('click', (event) => {
             if (event.target.tagName === 'LI' && event.target.classList.contains('filter-item')) {
@@ -184,17 +212,27 @@ class FilterManager {
             }
         });
     }
+
+    // 現在アクティブなフィルターの値を取得します。
+    // @returns {string} アクティブなフィルターの値（例: "all", "anime_tag"）。
     getActiveFilter() {
         const activeFilterElement = this.filterListElement.querySelector('.filter-item.active');
         return activeFilterElement ? activeFilterElement.dataset.filter : 'all';
     }
 }
 
+// 写真ギャラリーの表示を管理するクラス。
 class GalleryView extends View {
+    // GalleryViewのインスタンスを初期化します。
+    // @param {HTMLElement} containerElement - ギャラリーのコンテナDOM要素。
+    // @param {Function} onPhotoSelectCallback - 写真タイルがクリックされたときに呼び出されるコールバック関数。
     constructor(containerElement, onPhotoSelectCallback) {
         super(containerElement);
         this.onPhotoSelect = onPhotoSelectCallback;
     }
+
+    // 指定された写真データをギャラリーに表示します。
+    // @param {Array<Object>} photosToDisplay - 表示する写真データの配列。
     displayPhotos(photosToDisplay) {
         this.clear();
         if (!photosToDisplay || photosToDisplay.length === 0) {
@@ -224,34 +262,42 @@ class GalleryView extends View {
     }
 }
 
+// 地図表示とマーカーの管理を行うクラス。
 class MapView extends View {
+    // MapViewのインスタンスを初期化します。
+    // @param {HTMLElement} containerElement - マップビュー全体のコンテナDOM要素。
+    // @param {HTMLElement} mainMapDomElement - Leafletマップを描画するDOM要素。
+    // @param {Function} onMarkerClickCallback - マップマーカーのポップアップ内から写真詳細表示が要求されたときに呼び出されるコールバック。
     constructor(containerElement, mainMapDomElement, onMarkerClickCallback) {
         super(containerElement);
         this.mainMapDomElement = mainMapDomElement;
         this.onMarkerClick = onMarkerClickCallback;
         this.mainMap = null;
-        this.markerGroup = null; // マーカーを管理するFeatureGroup
-        this.markerCache = new Map(); // photoIdをキーとしてマーカーをキャッシュ
+        this.markerGroup = null;
+        this.markerCache = new Map();
         this.currentFilteredPhotosForMap = [];
     }
 
+    // Leafletマップを初期化します。既に初期化済みの場合は何もしません。
     initializeMap() {
         if (!this.mainMap) {
-            this.mainMapDomElement.innerHTML = ''; // Clear any previous content
+            this.mainMapDomElement.innerHTML = '';
             this.mainMap = L.map(this.mainMapDomElement);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19,
             }).addTo(this.mainMap);
-            this.markerGroup = L.featureGroup().addTo(this.mainMap); // FeatureGroupを初期化してマップに追加
+            this.markerGroup = L.featureGroup().addTo(this.mainMap);
         }
     }
 
+    // 指定された写真データに基づいてマップ上にマーカーをプロットします。
+    // @param {Array<Object>} photosToPlot - マーカーをプロットする写真データの配列。
     plotMarkers(photosToPlot) {
         this.currentFilteredPhotosForMap = photosToPlot.filter(p => p.exif && p.exif.latitude && p.exif.longitude);
 
-        this.markerGroup.clearLayers(); // FeatureGroup内の全マーカーを削除
-        this.markerCache.clear(); // マーカーキャッシュをクリア
+        this.markerGroup.clearLayers();
+        this.markerCache.clear();
 
         const existingMessage = this.mainMapDomElement.querySelector('.map-message-overlay');
         if (existingMessage) existingMessage.remove();
@@ -259,7 +305,6 @@ class MapView extends View {
         if (this.currentFilteredPhotosForMap.length === 0) {
             const messageOverlay = document.createElement('div');
             messageOverlay.className = 'map-message-overlay';
-            // (スタイル設定は変更なし)
             messageOverlay.style.position = 'absolute';
             messageOverlay.style.top = '50%';
             messageOverlay.style.left = '50%';
@@ -277,7 +322,7 @@ class MapView extends View {
         this.currentFilteredPhotosForMap.forEach(photo => {
             const marker = L.marker([photo.exif.latitude, photo.exif.longitude]);
             marker.photoId = photo.id;
-            this.markerCache.set(photo.id, marker); // マーカーをキャッシュ
+            this.markerCache.set(photo.id, marker);
 
             const streetViewUrl = `https://www.google.com/maps?q&layer=c&cbll=${photo.exif.latitude},${photo.exif.longitude}&cbp=12,0,0,0,0`;
             const popupContent = `
@@ -299,7 +344,6 @@ class MapView extends View {
                 if (popupNode) {
                     const detailLinks = popupNode.querySelectorAll('.map-popup-detail-link, .map-popup-thumbnail-image');
                     detailLinks.forEach(link => {
-                        // イベントリスナーの再バインド処理（既存のクローンノード方式はLeafletの内部挙動を考えると安全な場合があるため維持）
                         const newLink = link.cloneNode(true);
                         link.parentNode.replaceChild(newLink, link);
                         newLink.addEventListener('click', (event) => {
@@ -313,18 +357,17 @@ class MapView extends View {
                     });
                 }
             });
-            this.markerGroup.addLayer(marker); // FeatureGroupにマーカーを追加
+            this.markerGroup.addLayer(marker);
         });
     }
 
+    // 指定された写真IDに対応するマーカーをアクティブ化（ポップアップ表示など）します。
+    // @param {number} photoId - アクティブ化するマーカーの写真ID。
     activateMarkerForPhoto(photoId) {
         if (!this.mainMap || !photoId) return;
-
-        const targetMarker = this.markerCache.get(photoId); // キャッシュからマーカーを取得
-
+        const targetMarker = this.markerCache.get(photoId);
         if (targetMarker) {
-            this.mainMap.closePopup(); // 既存のポップアップを閉じる
-            // マップの表示範囲内にマーカーがない場合は、マーカーの位置に移動してからポップアップを開く
+            this.mainMap.closePopup();
             if (!this.mainMap.getBounds().contains(targetMarker.getLatLng())) {
                 this.mainMap.setView(targetMarker.getLatLng(), this.mainMap.getZoom() < 15 ? 15 : this.mainMap.getZoom());
             }
@@ -334,6 +377,7 @@ class MapView extends View {
         }
     }
 
+    // Leafletマップのサイズを再計算させ、表示を更新します。コンテナのサイズ変更時に特に重要です。
     invalidateSize() {
         if (this.mainMap) {
             requestAnimationFrame(() => {
@@ -342,6 +386,8 @@ class MapView extends View {
         }
     }
 
+    // 現在のマップの表示状態（中心座標とズームレベル）を取得します。
+    // @returns {Object|null} マップの中心座標とズームレベルを含むオブジェクト、またはマップ未初期化の場合はnull。
     getCurrentViewState() {
         if (this.mainMap) {
             return {
@@ -352,6 +398,7 @@ class MapView extends View {
         return null;
     }
 
+    // 現在表示されているマーカー全体が収まるようにマップの表示範囲を調整します。
     fitBoundsToMarkers() {
         if (this.mainMap && this.markerGroup && this.markerGroup.getLayers().length > 0) {
             const bounds = this.markerGroup.getBounds();
@@ -361,6 +408,9 @@ class MapView extends View {
         }
     }
     
+    // マップの表示を指定された中心座標とズームレベルに設定します。
+    // @param {Array<number>} center - 中心の緯度経度 [lat, lng]。
+    // @param {number} zoom - ズームレベル。
     setView(center, zoom) {
         if (this.mainMap) {
             this.mainMap.setView(center, zoom);
@@ -368,7 +418,12 @@ class MapView extends View {
     }
 }
 
+// 写真詳細ビューの表示と操作を管理するクラス。
 class DetailView extends View {
+    // DetailViewのインスタンスを初期化します。
+    // @param {HTMLElement} containerElement - 詳細ビューのコンテナDOM要素。
+    // @param {Object} domElements - 詳細ビュー内の各種DOM要素への参照を持つオブジェクト。
+    // @param {Object} callbacks - コールバック関数（戻るボタン、サムネイルクリックなど）を持つオブジェクト。
     constructor(containerElement, domElements, callbacks) {
         super(containerElement);
         this.dom = domElements;
@@ -383,6 +438,11 @@ class DetailView extends View {
         this.WHEEL_NAVIGATION_COOLDOWN = 300;
         this._initEventListeners();
     }
+
+    // 指定された写真データを詳細ビューに表示します。
+    // @param {Object} photoData - 表示する写真のデータ。
+    // @param {Array<Object>} photosForContext - ナビゲーションコンテキスト用の写真データ配列。
+    // @param {number} currentIndex - photosForContext内での現在表示写真のインデックス。
     displayPhotoDetail(photoData, photosForContext, currentIndex) {
         this.currentPhotoData = photoData;
         this.currentPhotosForContext = photosForContext;
@@ -414,6 +474,8 @@ class DetailView extends View {
             });
         }
     }
+
+    // 内部メソッド: EXIF情報（撮影日時）を整形して表示します。
     _updateExifDisplay(exifInfo) {
         if (exifInfo.dateTimeOriginal) {
             try {
@@ -442,6 +504,7 @@ class DetailView extends View {
         }
     }
 
+    // 内部メソッド: 詳細ビュー内のミニマップを設定または更新します。
     _setupOrUpdateDetailMap(exifInfo) {
         if (this.detailMap) {
             this.detailMap.remove();
@@ -449,12 +512,11 @@ class DetailView extends View {
         }
         this.dom.mapElement.innerHTML = '';
         if (exifInfo && exifInfo.latitude && exifInfo.longitude) {
-            // requestAnimationFrame でラップしてDOM操作のタイミングを調整
             requestAnimationFrame(() => {
                 this.detailMap = L.map(this.dom.mapElement, {
                         attributionControl: false
                     })
-                    .setView([exifInfo.latitude, exifInfo.longitude], 12); // 詳細マップのデフォルトズーム
+                    .setView([exifInfo.latitude, exifInfo.longitude], 12);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19
                 }).addTo(this.detailMap);
@@ -462,15 +524,13 @@ class DetailView extends View {
                     prefix: '<a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> | © <a href="http://osm.org/copyright">OSM</a>'
                 }).addTo(this.detailMap);
 
-                const marker = L.marker([exifInfo.latitude, exifInfo.longitude])
+                L.marker([exifInfo.latitude, exifInfo.longitude])
                     .addTo(this.detailMap)
                     .bindPopup(this.currentPhotoData.title || '撮影場所');
 
-                // マップのサイズ変更を少し遅延させて実行
                 setTimeout(() => {
                     if (this.detailMap) {
                         this.detailMap.invalidateSize();
-                        // marker.openPopup(); // 必要に応じてポップアップを自動で開く
                     }
                 }, 100);
 
@@ -484,6 +544,8 @@ class DetailView extends View {
             this.dom.streetviewLink.style.display = 'none';
         }
     }
+
+    // 内部メソッド: 詳細ビューのサムネイルリストを生成します。
     _populateThumbnails(activePhotoId, photosForContext) {
         this.dom.thumbnailList.innerHTML = '';
         photosForContext.forEach(photo => {
@@ -515,6 +577,8 @@ class DetailView extends View {
             this.dom.thumbnailList.appendChild(thumbItem);
         });
     }
+
+    // 内部メソッド: 詳細ビューの画像表示を1枚表示モードに切り替えます。
     _switchToSingleView() {
         this.dom.singleImageView.classList.add('active-detail-image-display');
         this.dom.sideBySideView.classList.remove('active-detail-image-display');
@@ -523,12 +587,16 @@ class DetailView extends View {
         this.isRealImageDisplayedInSingleView = true;
         if (this.currentPhotoData) this.dom.modalImage.src = this.currentPhotoData.realSrc;
     }
+
+    // 内部メソッド: 詳細ビューの画像表示を2枚比較表示モードに切り替えます。
     _switchToSideBySideView() {
         this.dom.singleImageView.classList.remove('active-detail-image-display');
         this.dom.sideBySideView.classList.add('active-detail-image-display');
         this.dom.toggleComparisonButton.textContent = '1枚表示に戻す';
         this.isDetailSideBySideActive = true;
     }
+
+    // 詳細ビューを非表示にし、関連するリソース（マップなど）をクリーンアップします。
     hideAndCleanup() {
         this.hide();
         if (this.detailMap) {
@@ -542,6 +610,8 @@ class DetailView extends View {
         this.dom.photoDescription.value = '';
         this.dom.photoDescription.readOnly = true;
     }
+
+    // 内部メソッド: 詳細ビュー内のイベントリスナーを初期化します。
     _initEventListeners() {
         this.dom.modalImage.addEventListener('click', () => {
             if (!this.currentPhotoData || this.isDetailSideBySideActive) return;
@@ -630,14 +700,16 @@ class DetailView extends View {
     }
 }
 
+// 写真ギャラリーアプリケーション全体の制御を行うメインクラス。
 class PhotoApp {
-    // 定数
-    static DEFAULT_MAP_CENTER = [36, 138]; // 日本の概ね中心
-    static DEFAULT_MAP_ZOOM = 7;
-    static DETAIL_MAP_ZOOM_FROM_GALLERY = 15;
-    static SINGLE_MARKER_MAP_ZOOM = 12;
-    static MARKER_ACTIVATION_DELAY = 150; // ms
+    // アプリケーションの定数
+    static DEFAULT_MAP_CENTER = [36, 138]; // マーカーがない場合のデフォルト中心位置 (日本の概ね中心)
+    static DEFAULT_MAP_ZOOM = 7; // マーカーがない場合のデフォルトズームレベル
+    static DETAIL_MAP_ZOOM_FROM_GALLERY = 15; // 詳細からマップに戻った際のズームレベル
+    static SINGLE_MARKER_MAP_ZOOM = 12; // 単一マーカー表示時のデフォルトズーム (現在未使用)
+    static MARKER_ACTIVATION_DELAY = 150; // マーカーアクティブ化の遅延時間 (ms)
 
+    // PhotoAppのインスタンスを初期化します。DOM要素の取得、各モジュールの初期化を行います。
     constructor() {
         this.dom = {
             filterList: document.getElementById('filter-list'),
@@ -672,10 +744,8 @@ class PhotoApp {
 
         this.photoDataService = new PhotoDataService('photos.json');
         this.filterManager = new FilterManager(this.dom.filterList, this.handleFilterChange.bind(this));
-
         this.galleryView = new GalleryView(this.dom.photoGalleryContainer, this.handlePhotoSelect.bind(this));
         this.mapView = new MapView(this.dom.mapViewContainer, this.dom.mainMapElement, this.handlePhotoSelect.bind(this));
-
         const detailViewCallbacks = {
             onReturnToGallery: () => this.switchToView('gallery'),
             onReturnToMap: () => this.switchToView('map'),
@@ -686,25 +756,23 @@ class PhotoApp {
 
         this.allPhotos = [];
         this.currentFilteredPhotos = [];
-
         this.currentView = 'gallery';
         this.previousViewBeforeDetail = 'gallery';
-
         this.lastDetailPhotoLocation = null;
         this.lastOpenedDetailPhotoId = null;
-
         this.isFirstMapLoad = true;
-        this.mapLastCenter = [...PhotoApp.DEFAULT_MAP_CENTER]; // 初期値としてコピー
+        this.mapLastCenter = [...PhotoApp.DEFAULT_MAP_CENTER];
         this.mapLastZoom = PhotoApp.DEFAULT_MAP_ZOOM;
-        this.mapShouldFitBoundsOnFilterChange = false; // フィルター変更時にboundsをフィットさせるか
+        this.mapShouldFitBoundsOnFilterChange = false;
     }
 
+    // アプリケーションを非同期に初期化します。写真データの読み込み、フィルター設定、初期ビュー表示を行います。
     async init() {
         try {
             this.allPhotos = await this.photoDataService.loadAndProcessPhotos();
             this.filterManager.populateFilters(this.allPhotos);
-            this.handleFilterChange(this.filterManager.getActiveFilter()); // 初期フィルター適用
-            this.switchToView('gallery'); // 初期ビュー
+            this.handleFilterChange(this.filterManager.getActiveFilter());
+            this.switchToView('gallery');
             this._initGlobalEventListeners();
         } catch (error) {
             this.dom.photoGalleryContainer.innerHTML = `<p style="color: red; text-align: center;">アプリケーションの初期化に失敗しました。詳細: ${error.message}</p>`;
@@ -712,10 +780,11 @@ class PhotoApp {
         }
     }
 
+    // 内部メソッド: グローバルなイベントリスナー（ビュー切り替えボタンなど）を初期化します。
     _initGlobalEventListeners() {
         this.dom.toggleMainViewButton.addEventListener('click', () => {
             if (this.currentView === 'gallery') {
-                this.mapShouldFitBoundsOnFilterChange = false; // マップ表示切り替え時はboundsフィット不要
+                this.mapShouldFitBoundsOnFilterChange = false;
                 this.switchToView('map');
             } else if (this.currentView === 'map') {
                 this.switchToView('gallery');
@@ -723,6 +792,8 @@ class PhotoApp {
         });
     }
 
+    // フィルターが変更された際の処理を行います。写真リストを更新し、現在のビューを再表示します。
+    // @param {string} filterType - 選択されたフィルターの種類（"all" またはアニメタグ）。
     handleFilterChange(filterType) {
         this.currentFilteredPhotos = (filterType === 'all' || !filterType) ?
             [...this.allPhotos] :
@@ -734,18 +805,21 @@ class PhotoApp {
         if (this.currentView === 'gallery') {
             this.galleryView.displayPhotos(this.currentFilteredPhotos);
         } else if (this.currentView === 'map') {
-            this.mapShouldFitBoundsOnFilterChange = true; // フィルター変更時はマーカーにフィットさせる
-            this.switchToView('map'); // マップビューを再描画
+            this.mapShouldFitBoundsOnFilterChange = true;
+            this.switchToView('map');
         } else if (this.currentView === 'detail') {
-            // 詳細ビュー表示中にフィルターが変更されたら、ギャラリーに戻るのが一般的
             this.switchToView('gallery');
         }
     }
 
+    // 写真が選択された際の処理（ギャラリーまたはマップから）。詳細ビューを開きます。
+    // @param {number} photoId - 選択された写真のID。
     handlePhotoSelect(photoId) {
         this.openDetailView(photoId);
     }
 
+    // 指定された写真IDの詳細ビューを開きます。
+    // @param {number} photoId - 表示する写真のID。
     openDetailView(photoId) {
         const photoToDisplay = this.photoDataService.getPhotoById(photoId);
         if (!photoToDisplay) {
@@ -765,12 +839,9 @@ class PhotoApp {
         }
 
         let contextPhotosForDetailNav;
-        // 詳細ビューの前後ナビゲーションは、現在のフィルタリング状態（ギャラリーまたはマップ）に依存
         if (this.previousViewBeforeDetail === 'map') {
-            // マップビューから来た場合、マップに表示されていた写真でナビゲーション
             contextPhotosForDetailNav = this.mapView.currentFilteredPhotosForMap;
-        } else { // ギャラリービューまたはその他の場合
-            // 現在アクティブなフィルターに基づいてナビゲーション用の写真リストを作成
+        } else {
             const activeFilter = this.filterManager.getActiveFilter();
             contextPhotosForDetailNav = (activeFilter === 'all' || !activeFilter) ?
                 [...this.allPhotos] :
@@ -793,6 +864,8 @@ class PhotoApp {
         this._updateHeaderAndControls();
     }
 
+    // 指定されたビュー名にアプリケーションの表示を切り替えます。
+    // @param {string} viewName - 切り替え先のビュー名 ("gallery", "map", "detail")。
     switchToView(viewName) {
         const previousActualView = this.currentView;
 
@@ -800,7 +873,7 @@ class PhotoApp {
             this.detailView.hideAndCleanup();
         }
 
-        if (previousActualView === 'map' && viewName !== 'map' && this.mapView.mainMap) { // マップから他のビューへ
+        if (previousActualView === 'map' && viewName !== 'map' && this.mapView.mainMap) {
             const currentMapState = this.mapView.getCurrentViewState();
             if (currentMapState) {
                 this.mapLastCenter = [currentMapState.center.lat, currentMapState.center.lng];
@@ -819,41 +892,45 @@ class PhotoApp {
             this.galleryView.show();
         } else if (viewName === 'map') {
             this.dom.rightPaneHeaderTitle.textContent = '聖地マップ';
-            this.mapView.initializeMap(); // マップが初期化されていなければ初期化
+            this.mapView.initializeMap();
 
             const photosForMap = this.currentFilteredPhotos.filter(p => p.exif && p.exif.latitude && p.exif.longitude);
-            this.mapView.plotMarkers(photosForMap); // マーカーをプロット (内部でcurrentFilteredPhotosForMapも更新)
+            this.mapView.plotMarkers(photosForMap);
+
+            this.mapView.show();
+            this.mapView.invalidateSize();
 
             let viewSetBySpecificCondition = false;
 
             if (previousActualView === 'detail' && this.lastDetailPhotoLocation) {
-                // 詳細からマップに戻るときは、最後に見ていた写真の位置を表示
                 this.mapView.setView(this.lastDetailPhotoLocation, PhotoApp.DETAIL_MAP_ZOOM_FROM_GALLERY);
+                viewSetBySpecificCondition = true;
+            }
+            else if (this.isFirstMapLoad) {
+                if (this.mapView.currentFilteredPhotosForMap.length > 0) {
+                    setTimeout(() => {
+                        this.mapView.fitBoundsToMarkers();
+                    }, 100); 
+                } else {
+                    this.mapView.setView(PhotoApp.DEFAULT_MAP_CENTER, PhotoApp.DEFAULT_MAP_ZOOM);
+                }
                 this.isFirstMapLoad = false;
                 viewSetBySpecificCondition = true;
-            } else if (this.isFirstMapLoad) {
-                this.mapView.setView(PhotoApp.DEFAULT_MAP_CENTER, PhotoApp.DEFAULT_MAP_ZOOM);
-                this.isFirstMapLoad = false;
-                viewSetBySpecificCondition = true;
-            } else if (this.mapShouldFitBoundsOnFilterChange) {
-                 // フィルター変更からのマップ表示時はマーカー全体にフィット
+            }
+            else if (this.mapShouldFitBoundsOnFilterChange) {
                 if (this.mapView.currentFilteredPhotosForMap.length > 0) {
                     this.mapView.fitBoundsToMarkers();
-                    viewSetBySpecificCondition = true;
-                } else { // マーカーがない場合はデフォルトビュー
+                } else {
                     this.mapView.setView(this.mapLastCenter, this.mapLastZoom);
-                     viewSetBySpecificCondition = true;
                 }
-                this.mapShouldFitBoundsOnFilterChange = false; // フラグをリセット
+                this.mapShouldFitBoundsOnFilterChange = false;
+                viewSetBySpecificCondition = true;
             }
-
 
             if (!viewSetBySpecificCondition && this.mapView.mainMap) {
-                 // 上記のいずれでもビューが設定されなかった場合（例：ギャラリーからマップへ通常遷移）
                 this.mapView.setView(this.mapLastCenter, this.mapLastZoom);
             }
-            
-            // 詳細ビューからマップに遷移した場合、該当マーカーをアクティブ化
+
             if (previousActualView === 'detail' && this.lastOpenedDetailPhotoId !== null) {
                 setTimeout(() => {
                     if (this.mapView.mainMap) {
@@ -861,16 +938,13 @@ class PhotoApp {
                     }
                 }, PhotoApp.MARKER_ACTIVATION_DELAY);
             } else {
-                 this.lastOpenedDetailPhotoId = null; // 他のケースではリセット
+                 this.lastOpenedDetailPhotoId = null;
             }
-
-
-            this.mapView.show();
-            this.mapView.invalidateSize();
         }
         this._updateHeaderAndControls();
     }
 
+    // 内部メソッド: 現在のビューに応じてヘッダータイトルやコントロールボタンの表示を更新します。
     _updateHeaderAndControls() {
         if (this.currentView === 'gallery') {
             this.dom.toggleMainViewButton.textContent = 'マップで表示';
@@ -887,11 +961,10 @@ class PhotoApp {
             this.dom.returnToGalleryButton.style.display = 'inline-block';
             this.dom.returnToMapButton.style.display = 'inline-block';
 
-            // 詳細ビューの戻り先ボタンの表示制御
             if (this.previousViewBeforeDetail === 'map') {
                 this.dom.returnToMapButton.classList.add('primary-return-button');
                 this.dom.returnToGalleryButton.classList.remove('primary-return-button');
-            } else { // gallery or other
+            } else {
                 this.dom.returnToGalleryButton.classList.add('primary-return-button');
                 this.dom.returnToMapButton.classList.remove('primary-return-button');
             }
@@ -899,6 +972,7 @@ class PhotoApp {
     }
 }
 
+// DOMContentLoadedイベントでPhotoAppを初期化
 document.addEventListener('DOMContentLoaded', () => {
     const app = new PhotoApp();
     app.init();
