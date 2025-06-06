@@ -115,6 +115,15 @@ body {
     background-color: #5a6268;
 }
 
+.header-buttons button.primary-return-button {
+    background-color: #007bff; /* アクティブなフィルターと同じ青色 */
+    border-color: #007bff;
+}
+
+.header-buttons button.primary-return-button:hover {
+    background-color: #0069d9; /* ホバー時の色も設定 */
+    border-color: #0062cc;
+}
 
 /* コンテンツ表示エリア共通スタイル */
 .content-view {
@@ -508,7 +517,7 @@ body {
 }
 
 #detail-streetview-link {
-    display: inline-block !important;
+    display: inline-block;
     margin-top: 0;
     color: #007bff;
     text-decoration: none;
@@ -518,6 +527,9 @@ body {
     border-radius: 4px;
     transition: background-color 0.2s;
     flex-shrink: 0;
+}
+#detail-streetview-link.hidden {
+    display: none;
 }
 #detail-streetview-link:hover {
     background-color: #d0e6ff;
