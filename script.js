@@ -459,7 +459,6 @@ class DetailView extends View {
         this.dom.title.textContent = this.currentPhotoData.title;
         this.dom.animeTitleDisplay.textContent = `アニメ: ${this.currentPhotoData.animeTitleDisplay}`;
         this.dom.photoDescription.value = this.currentPhotoData.description;
-        this.dom.photoDescription.readOnly = false;
         this._updateExifDisplay(this.currentPhotoData.exif);
         this._setupOrUpdateDetailMap(this.currentPhotoData.exif);
         this._populateThumbnails(this.currentPhotoData.id, this.currentPhotosForContext);
@@ -536,7 +535,7 @@ class DetailView extends View {
 
                 const streetViewUrl = `https://www.google.com/maps?q&layer=c&cbll=${exifInfo.latitude},${exifInfo.longitude}`;
                 this.dom.streetviewLink.href = streetViewUrl;
-                this.dom.streetviewLink.style.display = 'inline-block';
+                this.dom.streetviewLink.classList.remove('hidden');
                 this.dom.streetviewLink.innerHTML = `<i class="fas fa-street-view"></i> ストリートビューで見る`;
             });
         } else {
