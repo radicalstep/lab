@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ナンプレ（上級者対応版）</title>
+    <style>
+        /* --- グローバルスタイル --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #1a237e;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        /* --- 操作パネル --- */
+        #controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #controls label {
+            font-weight: bold;
+        }
+        #controls select, #controls button, .control-button {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        #controls select {
+            background-color: white;
+            color: #333;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.4-5.4-13z%22/%3E%3C/svg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 10px;
+            padding-right: 35px;
+        }
+        #new-game-btn { background-color: #1976d2; color: white; }
+        #check-btn { background-color: #388e3c; color: white; }
+        #reset-btn { background-color: #f57c00; color: white; }
+        #give-up-btn { background-color: #d32f2f; color: white; }
+        #give-up-btn:hover { background-color: #c62828; }
+        #controls button:disabled, #controls select:disabled, .control-button:disabled {
+            background-color: #bdbdbd;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* --- 設定パネル --- */
+        #settings-toggle-btn {
+            position: fixed; top: 80px; left: 0; z-index: 1001;
+            padding: 10px; font-size: 16px; background-color: #3f51b5;
+            color: white; border: none; border-radius: 0 8px 8px 0;
+            cursor: pointer; box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+            writing-mode: vertical-rl; text-orientation: mixed;
+        }
+        #settings-panel {
+            position: fixed; top: 0; left: 0; width: 350px; height: 100%;
+            background-color: #f8f9fa; border-right: 1px solid #ddd;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1); z-index: 1000;
+            transform: translateX(-100%); transition: transform 0.3s ease-in-out;
+            padding: 20px 20px 20px 60px; box-sizing: border-box;
+            display: flex; flex-direction: column; gap: 25px; overflow-y: auto;
+        }
+        #settings-panel.open {
+            transform: translateX(0);
+        }
+        .settings-section {
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .settings-section h4 {
+            margin: 0 0 5px 0; color: #1a237e;
+            border-bottom: 2px solid #c5cae9; padding-bottom: 5px;
+        }
+        .settings-section label {
+            display: flex; align-items: center; gap: 8px; font-size: 15px;
+        }
+        .share-group {
+            display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+        }
+        .share-group .input-wrapper { display: flex; gap: 8px; }
+        .share-group input[type="text"] {
+            flex-grow: 1; padding: 8px; border: 1px solid #ccc;
+            border-radius: 4px; font-size: 14px;
+            font-family: inherit;
+        }
+        .share-group button { padding: 8px 12px; font-size: 14px; flex-shrink: 0; }
+        #copy-code-btn { background-color: #3f51b5; color: white; }
+        #load-code-btn { background-color: #0288d1; color: white; }
+
+        /* --- カラーパレット --- */
+        #palette-container {
+            display: flex; align-items: center; gap: 15px;
+            margin-bottom: 20px; padding: 8px;
+            background-color: #c5cae9; border-radius: 8px;
+        }
+        #color-palette { display: flex; gap: 8px; }
+        .color-swatch {
+            width: 30px; height: 30px; border-radius: 50%;
+            cursor: pointer; border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .color-swatch[style*="#ffffff"] { border-color: #ccc; }
+        .color-swatch:hover { transform: scale(1.1); }
+        .color-swatch.selected { border-color: #1976d2; transform: scale(1.2); }
+        #color-help-text { font-size: 14px; color: #3f51b5; font-weight: 500; margin: 0; }
+
+        /* --- ゲームコンテナ --- */
+        #game-container {
+            display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap;
+        }
+        .board-wrapper {
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .board-label {
+            font-size: 1.2em; font-weight: bold; margin-bottom: 10px; color: #3f51b5;
+        }
+
+        /* --- 数独ボード --- */
+        .sudoku-board { border: 3px solid #333; }
+        .sudoku-board table { border-collapse: collapse; table-layout: fixed; }
+        .sudoku-board td {
+            width: 54px; height: 54px; overflow: hidden;
+            padding: 0; box-sizing: border-box; position: relative;
+            border: 1px solid #ccc; font-size: 0; vertical-align: top;
+            transition: background-color 0.3s;
+        }
+        .sudoku-board td:nth-child(3n) { border-right: 2px solid #333; }
+        .sudoku-board tr:nth-child(3n) td { border-bottom: 2px solid #333; }
+        .sudoku-board td:focus-within, .sudoku-board td.focused {
+            outline: 2px solid #1976d2; z-index: 20;
+        }
+
+        /* --- マスと数字のスタイル --- */
+        .given-number, .user-input-display {
+            width: 100%; height: 100%; display: flex; align-items: center;
+            justify-content: center; font-size: 28px; font-weight: bold;
+            box-sizing: border-box; background-color: transparent;
+        }
+        .given-number { color: #333; }
+        .user-input-display { color: #1976d2; }
+        .user-input-field {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            text-align: center; border: none; background: transparent;
+            color: transparent; font-size: 28px; padding: 0; caret-color: #1976d2;
+            ime-mode: disabled;
+        }
+        .user-input-field:focus { outline: none; }
+
+        /* --- マスの状態に応じたスタイル --- */
+        .sudoku-board td:has(.given-number) { background-color: #e0e0e0; }
+        .sudoku-board td:has(.memo-input-cell), .sudoku-board td:has(.user-input-display) { background-color: #fff; }
+        .user-input-display.incorrect { background-color: #e57373 !important; color: #c62828 !important; }
+        .user-input-display.solved-cell { color: #388e3c !important; }
+        .user-input-display.revealed-answer { color: #d32f2f !important; }
+        .user-input-display.revealed-empty-text { color: #f57c00 !important; }
+        .highlight-conflict { background-color: rgba(229, 115, 115, 0.4) !important; }
+
+        /* --- マスの色付け用スタイル --- */
+        .cell-color-1 { background-color: #e57373 !important; }
+        .cell-color-2 { background-color: #ffd54f !important; }
+        .cell-color-3 { background-color: #6cbb5a !important; }
+        .cell-color-4 { background-color: #00a7db !important; }
+        .cell-color-5 { background-color: #64b5f6 !important; }
+        .cell-color-6 { background-color: #9575cd !important; }
+        .cell-color-7 { background-color: #f06292 !important; }
+
+        /* --- メモ機能のスタイル --- */
+        .memo-input-cell { cursor: pointer; }
+        .memo-grid {
+            width: 100%; height: 100%; display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            pointer-events: none;
+        }
+        .memo-cell {
+            font-size: 14px; font-weight: 500; color: #424242;
+            display: flex; align-items: center; justify-content: center;
+            visibility: hidden;
+            transition: color 0.3s, background-color 0.3s;
+        }
+        .memo-cell.visible { visibility: visible; }
+        .memo-cell.conflict-memo {
+            background-color: rgba(229, 115, 115, 0.9) !important;
+            color: white !important;
+            border-radius: 3px;
+            font-weight: 700 !important;
+        }
+
+        /* --- メッセージエリア --- */
+        #message {
+            margin-top: 20px; font-size: 18px; font-weight: bold; height: 25px;
+        }
+        .success { color: #388e3c; }
+        .error { color: #d32f2f; }
+        .info { color: #f57c00; }
+    </style>
+</head>
+
+<body>
+    <!-- 設定パネル (左からスライドイン) -->
+    <button id="settings-toggle-btn">⚙️ 設定</button>
+    <div id="settings-panel" class="closed">
+        <!-- ハイライト設定 -->
+        <div id="error-check-settings" class="settings-section">
+            <h4>ハイライト設定</h4>
+            <label>
+                <input type="checkbox" id="check-main-conflict-toggle" checked>
+                本番マスの重複をハイライト
+            </label>
+            <label>
+                <input type="checkbox" id="check-memo-conflict-toggle" checked>
+                メモの重複をハイライト
+            </label>
+        </div>
+        <!-- 盤面共有 -->
+        <div id="share-container" class="settings-section">
+            <h4>盤面の共有</h4>
+            <div class="share-group">
+                <label for="puzzle-code-display">盤面コード:</label>
+                <div class="input-wrapper">
+                    <input type="text" id="puzzle-code-display" readonly>
+                    <button id="copy-code-btn" class="control-button">コピー</button>
+                </div>
+            </div>
+            <div class="share-group">
+                <label for="puzzle-code-input">コードを読み込み:</label>
+                <div class="input-wrapper">
+                    <input type="text" id="puzzle-code-input" placeholder="ここにコードを貼り付け">
+                    <button id="load-code-btn" class="control-button">読込</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <h1>ナンプレ</h1>
+
+    <!-- 操作パネル -->
+    <div id="controls">
+        <div class="control-group">
+            <label for="difficulty">難易度:</label>
+            <select id="difficulty">
+                <option value="easy">かんたん</option>
+                <option value="medium" selected>ふつう</option>
+                <option value="hard">むずかしい</option>
+                <option value="insane">神レベル</option>
+            </select>
+        </div>
+        <button id="new-game-btn">新しい問題</button>
+        <button id="check-btn">答えをチェック</button>
+        <button id="reset-btn">リセット</button>
+        <button id="give-up-btn">答えを見る</button>
+    </div>
+
+    <!-- カラーパレット -->
+    <div id="palette-container">
+        <p id="color-help-text">Ctrl/Cmd + クリックで色塗り</p>
+        <div id="color-palette"></div>
+    </div>
+
+    <!-- ゲーム盤 -->
+    <div id="game-container">
+        <div class="board-wrapper">
+            <div class="board-label">メモ用</div>
+            <div id="memo-board" class="sudoku-board"></div>
+        </div>
+        <div class="board-wrapper">
+            <div class="board-label">本番用</div>
+            <div id="main-board" class="sudoku-board"></div>
+        </div>
+    </div>
+
+    <!-- メッセージ表示エリア -->
+    <div id="message"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- 定数 (Constants) ---
+            const paletteColors = ['#e57373', '#ffd54f', '#6cbb5a', '#00a7db', '#64b5f6', '#9575cd', '#f06292', '#ffffff'];
+            const difficultyLevels = {
+                easy: { minHints: 36, requiredLevel: 1 },
+                medium: { minHints: 30, requiredLevel: 1 },
+                hard: { minHints: 26, requiredLevel: 2 },
+                insane: { minHints: 21, requiredLevel: 4 }
+            };
+            const MAX_GENERATION_ATTEMPTS = 1500; // 安全のための最大試行回数
+
+            // --- 状態変数 (State Variables) ---
+            let solution = [], puzzle = [], memoGrid = [], cellColors = [], userInputs = [];
+            let selectedColorClass = '', isCheckMainConflictEnabled = true, isCheckMemoConflictEnabled = true;
+
+            // --- DOM要素 (DOM Elements) ---
+            const memoBoardElement = document.getElementById('memo-board');
+            const mainBoardElement = document.getElementById('main-board');
+            const messageElement = document.getElementById('message');
+            const paletteContainer = document.getElementById('palette-container');
+            const colorPaletteElement = document.getElementById('color-palette');
+            const newGameBtn = document.getElementById('new-game-btn');
+            const checkBtn = document.getElementById('check-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const giveUpBtn = document.getElementById('give-up-btn');
+            const difficultySelect = document.getElementById('difficulty');
+            const puzzleCodeDisplay = document.getElementById('puzzle-code-display');
+            const copyCodeBtn = document.getElementById('copy-code-btn');
+            const puzzleCodeInput = document.getElementById('puzzle-code-input');
+            const loadCodeBtn = document.getElementById('load-code-btn');
+            const settingsToggleBtn = document.getElementById('settings-toggle-btn');
+            const settingsPanel = document.getElementById('settings-panel');
+            const checkMainConflictToggle = document.getElementById('check-main-conflict-toggle');
+            const checkMemoConflictToggle = document.getElementById('check-memo-conflict-toggle');
+
+            // --- イベントリスナーの登録 (Event Listeners) ---
+            newGameBtn.addEventListener('click', createNewGame);
+            checkBtn.addEventListener('click', checkSolution);
+            resetBtn.addEventListener('click', resetBoard);
+            giveUpBtn.addEventListener('click', showSolution);
+            copyCodeBtn.addEventListener('click', copyPuzzleCode);
+            loadCodeBtn.addEventListener('click', loadPuzzleFromCode);
+            settingsToggleBtn.addEventListener('click', () => settingsPanel.classList.toggle('open'));
+            checkMainConflictToggle.addEventListener('change', (e) => { isCheckMainConflictEnabled = e.target.checked; checkAllConflicts(); });
+            checkMemoConflictToggle.addEventListener('change', (e) => { isCheckMemoConflictEnabled = e.target.checked; checkAllConflicts(); });
+            document.addEventListener('click', (e) => { if (settingsPanel.classList.contains('open') && !settingsPanel.contains(e.target) && e.target !== settingsToggleBtn) { settingsPanel.classList.remove('open'); } });
+
+
+            // --- 初期化・ゲーム設定 (Initialization & Game Setup) ---
+
+            /* --- 追加 --- */
+            /**
+             * バックトラッキングで盤面の解の数を数える (2つ見つかった時点で終了)
+             * @param {number[][]} board - チェックする盤面
+             * @returns {number} - 解の数 (0, 1, or 2) 2は2つ以上を意味する
+             */
+            function countSolutions(board) {
+                let count = 0;
+
+                function isSafe(r, c, num) {
+                    for (let i = 0; i < 9; i++) {
+                        if (board[r][i] === num || board[i][c] === num) {
+                            return false;
+                        }
+                    }
+                    const startRow = r - r % 3, startCol = c - c % 3;
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            if (board[i + startRow][j + startCol] === num) {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                }
+
+                function solve() {
+                    let find = findEmpty(board);
+                    if (!find) {
+                        count++;
+                        return count >= 2; // 2つ以上見つかったら true を返して探索を打ち切る
+                    }
+                    
+                    const [r, c] = find;
+
+                    for (let num = 1; num <= 9; num++) {
+                        if (isSafe(r, c, num)) {
+                            board[r][c] = num;
+                            if (solve()) {
+                                return true; // 上位の呼び出しに探索打ち切りを伝える
+                            }
+                            board[r][c] = 0; // バックトラック
+                        }
+                    }
+                    return false; // この分岐では解が見つからなかった or 2つは見つかっていない
+                }
+
+                function findEmpty(board) {
+                    for (let r = 0; r < 9; r++) {
+                        for (let c = 0; c < 9; c++) {
+                            if (board[r][c] === 0) {
+                                return [r, c];
+                            }
+                        }
+                    }
+                    return null;
+                }
+
+                solve();
+                return count;
+            }
+
+            /**
+             * 問題生成に失敗した場合、必ず成功するまで内部でリトライを続けるロジック
+             */
+            function createNewGame() {
+                messageElement.textContent = '問題を作成中...';
+                messageElement.className = 'info';
+                [newGameBtn, checkBtn, resetBtn, giveUpBtn, difficultySelect].forEach(el => el.disabled = true);
+                paletteContainer.style.pointerEvents = 'none';
+
+                setTimeout(() => {
+                    const difficultySetting = difficultyLevels[difficultySelect.value];
+                    let finalPuzzle, finalSolution;
+
+                    // 条件を満たす問題が生成されるまで、リトライする
+                    for (let attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt++) {
+                        // 1. 新しい完成盤面を生成する
+                        const newSolution = generateNewSolution();
+                        let currentPuzzle = JSON.parse(JSON.stringify(newSolution));
+                        
+                        // 2. 削除候補となるマスのリストを作成し、シャッフルする
+                        let cellIndices = [];
+                        for (let i = 0; i < 40; i++) cellIndices.push(i);
+                        cellIndices.push(40); // 中央のマス
+                        shuffle(cellIndices);
+
+                        // 3. マスを対称的に削除していく（穴掘り）
+                        let removedCount = 0;
+                        for (const cellIndex of cellIndices) {
+                            if (81 - removedCount <= difficultySetting.minHints) {
+                                break;
+                            }
+
+                            const r1 = Math.floor(cellIndex / 9), c1 = cellIndex % 9;
+                            const r2 = 8 - r1, c2 = 8 - c1;
+                            const temp1 = currentPuzzle[r1][c1], temp2 = currentPuzzle[r2][c2];
+
+                            if (temp1 === 0) continue;
+
+                            currentPuzzle[r1][c1] = 0;
+                            if (cellIndex !== 40) currentPuzzle[r2][c2] = 0;
+
+                            /* --- 変更 --- */
+                            // 4. この時点で解けるかと、解の一意性を検証
+                            const tempBoardForLevelCheck = JSON.parse(JSON.stringify(currentPuzzle));
+                            const tempBoardForUniquenessCheck = JSON.parse(JSON.stringify(currentPuzzle));
+                            const solutionCount = countSolutions(tempBoardForUniquenessCheck);
+
+                            if (solutionCount !== 1 || !solveWithLevel(tempBoardForLevelCheck, difficultySetting.requiredLevel)) {
+                                // 解が一意でない、または指定レベルで解けない（難しすぎる）なら元に戻す
+                                currentPuzzle[r1][c1] = temp1;
+                                if (cellIndex !== 40) currentPuzzle[r2][c2] = temp2;
+                            } else {
+                                // 成功したら削除数をカウント
+                                removedCount += (cellIndex === 40) ? 1 : 2;
+                            }
+                            /* --- 変更ここまで --- */
+                        }
+                        
+                        // 5. 生成された問題が、要求難易度を正確に満たしているか最終チェック
+                        const isHardEnough = difficultySetting.requiredLevel > 1 ?
+                            !solveWithLevel(JSON.parse(JSON.stringify(currentPuzzle)), difficultySetting.requiredLevel - 1) :
+                            true;
+
+                        // 6. 条件を満たしていれば、この問題を最終版として採用し、ループを抜ける
+                        if (isHardEnough) {
+                            finalPuzzle = currentPuzzle;
+                            finalSolution = newSolution;
+                            break;
+                        }
+                    }
+
+                    if (!finalPuzzle) {
+                        messageElement.textContent = '問題生成がタイムアウトしました。ブラウザをリロードしてください。';
+                        messageElement.className = 'error';
+                        [newGameBtn, difficultySelect].forEach(el => el.disabled = false);
+                        return;
+                    }
+
+                    puzzle = finalPuzzle;
+                    solution = finalSolution;
+
+                    resetBoardState();
+                    messageElement.textContent = '';
+                    [newGameBtn, checkBtn, resetBtn, giveUpBtn, difficultySelect].forEach(el => el.disabled = false);
+                    paletteContainer.style.pointerEvents = 'auto';
+                }, 10);
+            }
+            
+            /**
+             * 指定されたレベルまでのテクニックで盤面を解く高速ソルバー
+             */
+            function solveWithLevel(board, level) {
+                const candidates = calculateAllCandidates(board);
+                while (true) {
+                    let changed = false;
+                    let nakedSingleFound;
+                    do {
+                        nakedSingleFound = false;
+                        for (let r = 0; r < 9; r++) {
+                            for (let c = 0; c < 9; c++) {
+                                if (board[r][c] === 0 && candidates[r][c].size === 1) {
+                                    const num = candidates[r][c].values().next().value;
+                                    board[r][c] = num;
+                                    updateCandidates(candidates, r, c, num);
+                                    changed = true;
+                                    nakedSingleFound = true;
+                                }
+                            }
+                        }
+                    } while (nakedSingleFound);
+
+                    if (findAndFillHiddenSingles(board, candidates)) {
+                        changed = true;
+                        continue;
+                    }
+                    if (level >= 2 && findAndApplyXWing(board, candidates)) {
+                        changed = true;
+                        continue;
+                    }
+                    if (level >= 3 && findAndApplySwordfish(board, candidates)) {
+                        changed = true;
+                        continue;
+                    }
+                    if (level >= 4 && findAndApplyXYWing(board, candidates)) {
+                        changed = true;
+                        continue;
+                    }
+                    if (!changed) break;
+                }
+                for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        if (board[r][c] === 0) return false;
+                    }
+                }
+                return true;
+            }
+            
+            function updateCandidates(candidates, r, c, num) {
+                candidates[r][c].clear();
+                for (let j = 0; j < 9; j++) candidates[r][j].delete(num);
+                for (let i = 0; i < 9; i++) candidates[i][c].delete(num);
+                const startRow = r - r % 3, startCol = c - c % 3;
+                for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) candidates[startRow + i][startCol + j].delete(num);
+            }
+
+            function findAndApplySwordfish(board, candidates) {
+                let changed = false;
+                for (let n = 1; n <= 9; n++) {
+                    const rowsWithCands = [];
+                    for (let r = 0; r < 9; r++) {
+                        const candCols = [];
+                        for (let c = 0; c < 9; c++) if (board[r][c] === 0 && candidates[r][c].has(n)) candCols.push(c);
+                        if (candCols.length >= 2 && candCols.length <= 3) rowsWithCands.push({ row: r, cols: candCols });
+                    }
+                    if (rowsWithCands.length >= 3) {
+                        for (let i = 0; i < rowsWithCands.length; i++) {
+                            for (let j = i + 1; j < rowsWithCands.length; j++) {
+                                for (let k = j + 1; k < rowsWithCands.length; k++) {
+                                    const r_data = [rowsWithCands[i], rowsWithCands[j], rowsWithCands[k]];
+                                    const allCols = new Set([...r_data[0].cols, ...r_data[1].cols, ...r_data[2].cols]);
+                                    if (allCols.size === 3) {
+                                        const baseRows = [r_data[0].row, r_data[1].row, r_data[2].row];
+                                        for (const c of allCols) {
+                                            for (let r_idx = 0; r_idx < 9; r_idx++) {
+                                                if (!baseRows.includes(r_idx) && candidates[r_idx][c].has(n)) {
+                                                    candidates[r_idx][c].delete(n);
+                                                    changed = true;
+                                                }
+                                            }
+                                        }
+                                        if (changed) return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    const colsWithCands = [];
+                    for (let c = 0; c < 9; c++) {
+                        const candRows = [];
+                        for (let r = 0; r < 9; r++) if (board[r][c] === 0 && candidates[r][c].has(n)) candRows.push(r);
+                        if (candRows.length >= 2 && candRows.length <= 3) colsWithCands.push({ col: c, rows: candRows });
+                    }
+                    if (colsWithCands.length >= 3) {
+                         for (let i = 0; i < colsWithCands.length; i++) {
+                            for (let j = i + 1; j < colsWithCands.length; j++) {
+                                for (let k = j + 1; k < colsWithCands.length; k++) {
+                                    const c_data = [colsWithCands[i], colsWithCands[j], colsWithCands[k]];
+                                    const allRows = new Set([...c_data[0].rows, ...c_data[1].rows, ...c_data[2].rows]);
+                                    if (allRows.size === 3) {
+                                        const baseCols = [c_data[0].col, c_data[1].col, c_data[2].col];
+                                        for (const r of allRows) {
+                                            for (let c_idx = 0; c_idx < 9; c_idx++) {
+                                                if (!baseCols.includes(c_idx) && candidates[r][c_idx].has(n)) {
+                                                    candidates[r][c_idx].delete(n);
+                                                    changed = true;
+                                                }
+                                            }
+                                        }
+                                        if (changed) return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            function findAndApplyXYWing(board, candidates) {
+                let changed = false;
+                const bivalueCells = [];
+                for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (board[r][c] === 0 && candidates[r][c].size === 2) bivalueCells.push({ r, c, cands: Array.from(candidates[r][c]) });
+                if (bivalueCells.length < 3) return false;
+
+                for (let i = 0; i < bivalueCells.length; i++) {
+                    const pivot = bivalueCells[i];
+                    const [X, Y] = pivot.cands;
+                    const pincerCands = bivalueCells.filter((cell, j) => i !== j && areInSameUnit(pivot.r, pivot.c, cell.r, cell.c));
+                    if (pincerCands.length < 2) continue;
+                    
+                    for (let j = 0; j < pincerCands.length; j++) {
+                        for (let k = j + 1; k < pincerCands.length; k++) {
+                            const pincer1 = pincerCands[j], pincer2 = pincerCands[k];
+                            if (areInSameUnit(pincer1.r, pincer1.c, pincer2.r, pincer2.c)) continue;
+                            
+                            const cands1 = pincer1.cands, cands2 = pincer2.cands;
+                            let Z = -1;
+                            if (cands1.includes(X) && !cands1.includes(Y) && cands2.includes(Y) && !cands2.includes(X)) { const z1 = cands1.find(n => n !== X), z2 = cands2.find(n => n !== Y); if (z1 === z2) Z = z1; }
+                            else if (cands1.includes(Y) && !cands1.includes(X) && cands2.includes(X) && !cands2.includes(Y)) { const z1 = cands1.find(n => n !== Y), z2 = cands2.find(n => n !== X); if (z1 === z2) Z = z1; }
+                            
+                            if (Z !== -1) {
+                                const peers1 = getPeersSet(pincer1.r, pincer1.c), peers2 = getPeersSet(pincer2.r, pincer2.c);
+                                for (const p2_key of peers2) {
+                                    if (peers1.has(p2_key)) {
+                                        const [r, c] = p2_key.split(',').map(Number);
+                                        if (board[r][c] === 0 && candidates[r][c].has(Z)) {
+                                            candidates[r][c].delete(Z);
+                                            changed = true;
+                                        }
+                                    }
+                                }
+                                if (changed) return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            function areInSameUnit(r1, c1, r2, c2) {
+                if (r1 === r2 || c1 === c2) return true;
+                return Math.floor(r1 / 3) === Math.floor(r2 / 3) && Math.floor(c1 / 3) === Math.floor(c2 / 3);
+            }
+
+            function getPeersSet(r, c) {
+                const peers = new Set();
+                for (let i = 0; i < 9; i++) { if (i !== c) peers.add(`${r},${i}`); if (i !== r) peers.add(`${i},${c}`); }
+                const startRow = r - r % 3, startCol = c - c % 3;
+                for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+                    const pr = startRow + i, pc = startCol + j;
+                    if (pr !== r || pc !== c) peers.add(`${pr},${pc}`);
+                }
+                return peers;
+            }
+
+            function findAndApplyXWing(board, candidates) {
+                let changed = false;
+                for (let n = 1; n <= 9; n++) {
+                    const rowsWithTwoCandidates = [];
+                    for (let r = 0; r < 9; r++) {
+                        const candidateCols = [];
+                        for (let c = 0; c < 9; c++) if (board[r][c] === 0 && candidates[r][c].has(n)) candidateCols.push(c);
+                        if (candidateCols.length === 2) rowsWithTwoCandidates.push({ row: r, cols: candidateCols });
+                    }
+                    for (let i = 0; i < rowsWithTwoCandidates.length; i++) {
+                        for (let j = i + 1; j < rowsWithTwoCandidates.length; j++) {
+                            const r1 = rowsWithTwoCandidates[i], r2 = rowsWithTwoCandidates[j];
+                            if (r1.cols[0] === r2.cols[0] && r1.cols[1] === r2.cols[1]) {
+                                for (let c of r1.cols) for (let r_idx = 0; r_idx < 9; r_idx++) if (r_idx !== r1.row && r_idx !== r2.row) if (candidates[r_idx][c].has(n)) { candidates[r_idx][c].delete(n); changed = true; }
+                            }
+                        }
+                    }
+                    if (changed) return true;
+                    const colsWithTwoCandidates = [];
+                     for (let c = 0; c < 9; c++) {
+                        const candidateRows = [];
+                        for (let r = 0; r < 9; r++) if (board[r][c] === 0 && candidates[r][c].has(n)) candidateRows.push(r);
+                        if (candidateRows.length === 2) colsWithTwoCandidates.push({ col: c, rows: candidateRows });
+                    }
+                     for (let i = 0; i < colsWithTwoCandidates.length; i++) {
+                        for (let j = i + 1; j < colsWithTwoCandidates.length; j++) {
+                            const c1 = colsWithTwoCandidates[i], c2 = colsWithTwoCandidates[j];
+                            if (c1.rows[0] === c2.rows[0] && c1.rows[1] === c2.rows[1]) {
+                                for (let r of c1.rows) for (let c_idx = 0; c_idx < 9; c_idx++) if (c_idx !== c1.col && c_idx !== c2.col) if (candidates[r][c_idx].has(n)) { candidates[r][c_idx].delete(n); changed = true; }
+                            }
+                        }
+                    }
+                    if (changed) return true;
+                }
+                return changed;
+            }
+            
+            function calculateAllCandidates(board) { const candidates = Array(9).fill(0).map(() => Array(9).fill(0).map(() => new Set())); for (let r = 0; r < 9; r++) { for (let c = 0; c < 9; c++) { if (board[r][c] === 0) { const allNums = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]); for (let i = 0; i < 9; i++) allNums.delete(board[r][i]); for (let i = 0; i < 9; i++) allNums.delete(board[i][c]); const startRow = r - r % 3, startCol = c - c % 3; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) allNums.delete(board[i + startRow][j + startCol]); candidates[r][c] = allNums; } } } return candidates; }
+            function findAndFillHiddenSingles(board, candidates) { let overallChanged = false; const checkUnit = (unit) => { let changedInUnit = false; for (let n = 1; n <= 9; n++) { const possibleCells = []; for (const [r, c] of unit) { if (board[r][c] === 0 && candidates[r][c].has(n)) { possibleCells.push([r, c]); } } if (possibleCells.length === 1) { const [r, c] = possibleCells[0]; if (board[r][c] === 0) { board[r][c] = n; updateCandidates(candidates, r, c, n); changedInUnit = true; overallChanged = true; } } } return changedInUnit; }; let changedInLoop; do { changedInLoop = false; for (let i = 0; i < 9; i++) { if (checkUnit(Array.from({length: 9}, (_, c) => [i, c]))) changedInLoop = true; if (checkUnit(Array.from({length: 9}, (_, r) => [r, i]))) changedInLoop = true; } for (let br = 0; br < 3; br++) { for (let bc = 0; bc < 3; bc++) { const unit = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) unit.push([br * 3 + i, bc * 3 + j]); if (checkUnit(unit)) changedInLoop = true; } } } while (changedInLoop); return overallChanged; }
+            function initializeColorPalette() { colorPaletteElement.innerHTML = ''; paletteColors.forEach((color, index) => { const swatch = document.createElement('div'); swatch.className = 'color-swatch'; swatch.style.backgroundColor = color; swatch.dataset.selection = (color === '#ffffff') ? 'clear' : `cell-color-${index + 1}`; swatch.addEventListener('click', () => { const clickedSelection = swatch.dataset.selection; if (selectedColorClass === clickedSelection) { selectedColorClass = ''; document.querySelector('.color-swatch.selected')?.classList.remove('selected'); } else { selectedColorClass = clickedSelection; document.querySelector('.color-swatch.selected')?.classList.remove('selected'); swatch.classList.add('selected'); } }); colorPaletteElement.appendChild(swatch); }); }
+            function resetBoard() { resetBoardState(); }
+            function resetBoardState() { cellColors = Array(9).fill(0).map(() => Array(9).fill('')); memoGrid = Array(9).fill(0).map(() => Array(9).fill(0).map(() => [])); userInputs = Array(9).fill(0).map(() => Array(9).fill(0)); drawBoards(); checkAllConflicts(); updatePuzzleCode(); messageElement.textContent = ''; [checkBtn, resetBtn, giveUpBtn].forEach(btn => btn.disabled = false); }
+            function drawBoards() { let memoHTML = '<table>'; let mainHTML = '<table>'; for (let i = 0; i < 9; i++) { memoHTML += '<tr>'; mainHTML += '<tr>'; for (let j = 0; j < 9; j++) { const colorClass = cellColors[i][j] ? ` ${cellColors[i][j]}` : ''; const tdAttributes = `class="${colorClass}" data-row="${i}" data-col="${j}"`; if (puzzle[i][j] !== 0) { const givenCell = `<td ${tdAttributes}><div class="given-number">${puzzle[i][j]}</div></td>`; memoHTML += givenCell; mainHTML += givenCell; } else { const userInput = userInputs[i][j]; const displayValue = userInput || ''; const memoContent = `<div class="memo-input-cell" tabindex="0">${getMemoGridHTML()}</div>`; const mainContent = `<div class="user-input-display">${displayValue}</div><input type="text" class="user-input-field" maxlength="1" data-row="${i}" data-col="${j}" value="${displayValue}">`; memoHTML += `<td ${tdAttributes}>${memoContent}</td>`; mainHTML += `<td ${tdAttributes}>${mainContent}</td>`; } } memoHTML += '</tr>'; mainHTML += '</tr>'; } memoBoardElement.innerHTML = memoHTML + '</table>'; mainBoardElement.innerHTML = mainHTML + '</table>'; [...memoBoardElement.querySelectorAll('td'), ...mainBoardElement.querySelectorAll('td')].forEach(cell => { cell.addEventListener('click', handleCellColoring); }); memoBoardElement.querySelectorAll('.memo-input-cell').forEach(cellWrapper => { cellWrapper.parentElement.addEventListener('keydown', handleMemoKeyDown); }); mainBoardElement.querySelectorAll('.user-input-field').forEach(input => { input.addEventListener('keydown', handleMainKeyDown); input.addEventListener('input', handleMainInput); }); }
+            function getMemoGridHTML() { let html = '<div class="memo-grid">'; for (let k = 1; k <= 9; k++) { html += `<div class="memo-cell mc-${k}">${k}</div>`; } return html + '</div>'; }
+            function handleCellColoring(e) { if (!e.ctrlKey && !e.metaKey || !selectedColorClass) return; e.preventDefault(); const td = e.currentTarget; const r = parseInt(td.dataset.row); const c = parseInt(td.dataset.col); const currentColor = cellColors[r][c]; if (currentColor) td.classList.remove(currentColor); if (selectedColorClass === 'clear' || selectedColorClass === currentColor) { cellColors[r][c] = ''; } else { td.classList.add(selectedColorClass); cellColors[r][c] = selectedColorClass; } }
+            function handleMemoKeyDown(e) { if (e.ctrlKey || e.metaKey) return; const cell = e.currentTarget; const r = parseInt(cell.dataset.row); const c = parseInt(cell.dataset.col); let numStr = null; if (e.code.startsWith('Digit')) numStr = e.code.substring(5); else if (e.code.startsWith('Numpad')) numStr = e.code.substring(6); if (numStr && numStr >= '1' && numStr <= '9') { e.preventDefault(); toggleMemo(r, c, parseInt(numStr, 10)); checkAllConflicts(); } else if (e.code === 'Backspace' || e.code === 'Delete') { e.preventDefault(); clearMemo(r, c); checkAllConflicts(); } }
+            function handleMainKeyDown(e) { if (e.ctrlKey || e.metaKey) return; e.preventDefault(); const input = e.target; const r = parseInt(input.dataset.row); const c = parseInt(input.dataset.col); let numStr = null; if (e.code.startsWith('Digit')) numStr = e.code.substring(5); else if (e.code.startsWith('Numpad')) numStr = e.code.substring(6); let newValue = userInputs[r][c]; if (numStr && numStr >= '1' && numStr <= '9') { const num = parseInt(numStr, 10); newValue = (userInputs[r][c] === num) ? 0 : num; } else if (e.code === 'Backspace' || e.code === 'Delete') { newValue = 0; } else { return; } if (userInputs[r][c] !== newValue) { updateCellWithValue(r, c, newValue); } }
+            function handleMainInput(e) { if (e.isTrusted === false) return; const input = e.target; const r = parseInt(input.dataset.row); const c = parseInt(input.dataset.col); const value = input.value.replace(/[^1-9]/g, '').slice(0, 1); const newValue = value ? parseInt(value, 10) : 0; if (userInputs[r][c] !== newValue) { updateCellWithValue(r, c, newValue); } else if (input.value !== value) { input.value = value; } }
+            function updateCellWithValue(r, c, num) { userInputs[r][c] = num; const valueStr = num ? num.toString() : ''; const mainCellTd = mainBoardElement.querySelector(`td[data-row="${r}"][data-col="${c}"]`); if(mainCellTd) { mainCellTd.querySelector('.user-input-display').textContent = valueStr; mainCellTd.querySelector('.user-input-field').value = valueStr; } updateMemoCellContent(r, c, valueStr); if (num !== 0) { updateRelatedMemos(r, c, num); } checkAllConflicts(); }
+            function updateMemoCellContent(r, c, value) { const memoCellTD = memoBoardElement.querySelector(`td[data-row="${r}"][data-col="${c}"]`); if (!memoCellTD) return; if (value) { memoCellTD.innerHTML = `<div class="user-input-display">${value}</div>`; } else { memoCellTD.innerHTML = `<div class="memo-input-cell" tabindex="0">${getMemoGridHTML()}</div>`; memoCellTD.querySelector('.memo-input-cell').parentElement.addEventListener('keydown', handleMemoKeyDown); clearMemo(r, c, false); } }
+            function generateNewSolution() { let board = Array(9).fill(0).map(() => Array(9).fill(0)); function isSafe(r, c, num) { for (let i = 0; i < 9; i++) if (board[r][i] === num || board[i][c] === num) return false; const startRow = r - r % 3, startCol = c - c % 3; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) if (board[i + startRow][j + startCol] === num) return false; return true; } function solve() { for (let r = 0; r < 9; r++) { for (let c = 0; c < 9; c++) { if (board[r][c] === 0) { const numbers = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]); for (const num of numbers) { if (isSafe(r, c, num)) { board[r][c] = num; if (solve()) return true; board[r][c] = 0; } } return false; } } } return true; } solve(); return board; }
+            function checkSolution() { let isComplete = true; let isCorrect = true; mainBoardElement.querySelectorAll('.user-input-display.incorrect').forEach(display => display.classList.remove('incorrect')); for (let r = 0; r < 9; r++) { for (let c = 0; c < 9; c++) { if (puzzle[r][c] === 0) { if (userInputs[r][c] === 0) { isComplete = false; } else if (userInputs[r][c] !== solution[r][c]) { isCorrect = false; const display = mainBoardElement.querySelector(`td[data-row="${r}"][data-col="${c}"] .user-input-display`); if (display) display.classList.add('incorrect'); } } } } if (!isComplete) { messageElement.textContent = 'まだ完成していません。'; messageElement.className = 'info'; } else if (isCorrect) { messageElement.textContent = 'クリア！おめでとうございます！'; messageElement.className = 'success'; } else { messageElement.textContent = '間違いがあります。赤いマスを確認してください。'; messageElement.className = 'error'; } }
+            function showSolution() { if (!confirm('答えを表示しますか？\n(正解は緑、間違いは赤、空欄だったマスはオレンジで表示されます)')) return; mainBoardElement.querySelectorAll('.highlight-conflict').forEach(td => td.classList.remove('highlight-conflict')); memoBoardElement.querySelectorAll('.conflict-memo').forEach(mc => mc.classList.remove('conflict-memo')); for (let r = 0; r < 9; r++) { for (let c = 0; c < 9; c++) { if (puzzle[r][c] !== 0) continue; const correctAnswer = solution[r][c]; const userInput = userInputs[r][c]; const td = mainBoardElement.querySelector(`td[data-row="${r}"][data-col="${c}"]`); const display = td.querySelector('.user-input-display'); display.classList.remove('solved-cell', 'revealed-answer', 'revealed-empty-text', 'incorrect'); display.textContent = correctAnswer; userInputs[r][c] = correctAnswer; td.querySelector('input').value = correctAnswer; if (userInput !== 0) { if (userInput === correctAnswer) { display.classList.add('solved-cell'); } else { display.classList.add('revealed-answer'); } } else { display.classList.add('revealed-empty-text'); } } } messageElement.textContent = '答えを表示しました。「新しい問題」で再挑戦できます。'; messageElement.className = 'info'; [checkBtn, resetBtn, giveUpBtn].forEach(btn => btn.disabled = true); }
+            function checkAllConflicts() { mainBoardElement.querySelectorAll('.highlight-conflict').forEach(td => td.classList.remove('highlight-conflict')); memoBoardElement.querySelectorAll('.conflict-memo').forEach(mc => mc.classList.remove('conflict-memo')); if (!isCheckMainConflictEnabled && !isCheckMemoConflictEnabled) return; const currentBoard = JSON.parse(JSON.stringify(puzzle)); for(let r=0; r<9; r++) for(let c=0; c<9; c++) if(userInputs[r][c] !== 0) currentBoard[r][c] = userInputs[r][c]; if (isCheckMainConflictEnabled) { const conflicts = new Set(); const checkGroup = (group) => { const seen = {}; for (const [r, c] of group) { const num = currentBoard[r][c]; if (num === 0) continue; if (seen[num]) { seen[num].forEach(coords => conflicts.add(coords)); conflicts.add(`${r},${c}`); } else { seen[num] = [`${r},${c}`]; }}}; for (let i = 0; i < 9; i++) { checkGroup(Array.from({length: 9}, (_, c) => [i, c])); checkGroup(Array.from({length: 9}, (_, r) => [r, i])); } for (let br = 0; br < 3; br++) { for (let bc = 0; bc < 3; bc++) { const group = []; for (let r_off = 0; r_off < 3; r_off++) for (let c_off = 0; c_off < 3; c_off++) group.push([br*3+r_off, bc*3+c_off]); checkGroup(group); }} conflicts.forEach(coords => { const [r, c] = coords.split(','); const td = mainBoardElement.querySelector(`td[data-row="${r}"][data-col="${c}"]`); if (td) td.classList.add('highlight-conflict'); }); } if (isCheckMemoConflictEnabled) { for (let r = 0; r < 9; r++) { for (let c = 0; c < 9; c++) { if (memoGrid[r][c].length > 0) { memoGrid[r][c].forEach(memoNum => { let isConflict = false; for (let i = 0; i < 9; i++) if (currentBoard[r][i] === memoNum || currentBoard[i][c] === memoNum) isConflict = true; const startRow = r - r % 3, startCol = c - c % 3; for (let i = startRow; i < startRow + 3; i++) for (let j = startCol; j < startCol + 3; j++) if (currentBoard[i][j] === memoNum) isConflict = true; if (isConflict) { const memoCell = memoBoardElement.querySelector(`td[data-row="${r}"][data-col="${c}"] .mc-${memoNum}`); if (memoCell) memoCell.classList.add('conflict-memo'); } }); }}} } }
+            function toggleMemo(r, c, n) { const memo = memoGrid[r][c]; const index = memo.indexOf(n); if (index > -1) memo.splice(index, 1); else memo.push(n); updateMemoUIVisibility(r, c); }
+            function clearMemo(r, c, updateHTML = true) { if (memoGrid[r][c] && memoGrid[r][c].length > 0) { memoGrid[r][c] = []; if (updateHTML) updateMemoUIVisibility(r, c); } }
+            function updateMemoUIVisibility(r, c) { const container = memoBoardElement.querySelector(`td[data-row="${r}"][data-col="${c}"] .memo-grid`); if (!container) return; const memos = memoGrid[r][c]; for (let n = 1; n <= 9; n++) { const cell = container.querySelector(`.mc-${n}`); if (cell) cell.classList.toggle('visible', memos.includes(n)); } }
+            function updateRelatedMemos(r, c, num) { for (let j = 0; j < 9; j++) removeMemoNumber(r, j, num); for (let i = 0; i < 9; i++) removeMemoNumber(i, c, num); const startRow = r - r % 3, startCol = c - c % 3; for (let i = startRow; i < startRow + 3; i++) for (let j = startCol; j < startCol + 3; j++) removeMemoNumber(i, j, num); }
+            function removeMemoNumber(r, c, num) { if (!memoGrid[r] || !memoGrid[r][c]) return; const memo = memoGrid[r][c]; const index = memo.indexOf(num); if (index > -1) { memo.splice(index, 1); updateMemoUIVisibility(r, c); } }
+            function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+            function updatePuzzleCode() { puzzleCodeDisplay.value = `${boardToString(solution)}-${boardToString(puzzle)}`; }
+            function copyPuzzleCode() { if (!puzzleCodeDisplay.value) return; navigator.clipboard.writeText(puzzleCodeDisplay.value).then(() => { copyCodeBtn.textContent = 'コピー完了!'; setTimeout(() => { copyCodeBtn.textContent = 'コピー'; }, 2000); }).catch(() => { messageElement.textContent = 'コピーに失敗しました。'; messageElement.className = 'error'; }); }
+            function loadPuzzleFromCode() { const code = puzzleCodeInput.value.trim(); const parts = code.split('-'); if (parts.length !== 2 || parts[0].length !== 81 || parts[1].length !== 81 || !/^\d+$/.test(parts[0]) || !/^\d+$/.test(parts[1])) { messageElement.textContent = '無効な盤面コードです。'; messageElement.className = 'error'; return; } solution = stringToBoard(parts[0]); puzzle = stringToBoard(parts[1]); resetBoardState(); messageElement.textContent = '盤面を読み込みました。'; messageElement.className = 'success'; puzzleCodeInput.value = ''; settingsPanel.classList.remove('open'); }
+            function boardToString(board) { return board.flat().join(''); }
+            function stringToBoard(str) { const board = []; for (let i = 0; i < 9; i++) { board.push(str.substring(i * 9, (i + 1) * 9).split('').map(Number)); } return board; }
+
+            initializeColorPalette();
+            createNewGame();
+        });
+    </script>
+</body>
+</html>
