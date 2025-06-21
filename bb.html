@@ -34,13 +34,13 @@
         let audioCtx;
         let isSoundEnabled = false;
         let firstKeyPress = true;
-        let gameStarted = false; 
+        let gameStarted = false;
         let ball = {
             x: canvas.width / 2,
             y: canvas.height - 30,
             radius: 10,
-            dx: 0, 
-            dy: 0  
+            dx: 0,
+            dy: 0
         };
         let paddle = {
             height: 15,
@@ -97,7 +97,7 @@
             const gainNode = audioCtx.createGain();
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
             oscillator.type = 'sawtooth';
             oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
             oscillator.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
@@ -161,7 +161,7 @@
             gameStarted = false;
             ball.dx = 0;
             ball.dy = 0;
-            draw(); 
+            draw();
         }
         document.addEventListener("keydown", (e) => {
             if (!gameStarted && e.key === ' ') {
@@ -173,7 +173,7 @@
                 }
                 ball.dx = 4;
                 ball.dy = -4;
-                return; 
+                return;
             }
             if ((gameIsOver || gameIsWon) && e.key === ' ') {
                 resetGame();
@@ -196,8 +196,18 @@
                 }
             }
         }
-        function drawScore() { ctx.font = "16px Arial"; ctx.fillStyle = "#fff"; ctx.fillText("Score: " + score, 8, 20); }
-        function drawLives() { ctx.font = "16px Arial"; ctx.fillStyle = "#fff"; ctx.fillText("残機: " + lives, canvas.width - 65, 20); }
+        function drawScore() {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#fff";
+            ctx.textAlign = 'left'; 
+            ctx.fillText("Score: " + score, 8, 20);
+        }
+        function drawLives() {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#fff";
+            ctx.textAlign = 'right'; 
+            ctx.fillText("残機: " + lives, canvas.width - 8, 20); 
+        }
         function drawGameOverScreen() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
