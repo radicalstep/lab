@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>さめがめ</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #333;
+        }
+        #game-container {
+            padding: 10px;
+            background-color: #a0a0a0;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        #info-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 300px; /* game-boardの幅に合わせる */
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        #game-board {
+            display: grid;
+            border: 2px solid #333;
+            background-color: #c0c0c0;
+            user-select: none; /* テキスト選択を無効化 */
+        }
+        .block {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #fff;
+            box-sizing: border-box; /* borderをサイズに含める */
+            cursor: pointer;
+            /* transitionはハイライトのために残しても良い */
+            transition: outline 0.1s, box-shadow 0.1s;
+        }
+        /* .block:hover の浮き出る効果を削除 */
+        .highlight-group {
+            outline: 2px solid white;
+            outline-offset: -3px; /* 枠線を内側に引く */
+            box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+        }
+        /* 各色のスタイル */
+        .color-1 { background-color: #ff595e; }
+        .color-2 { background-color: #ffca3a; }
+        .color-3 { background-color: #8ac926; }
+        .color-4 { background-color: #1982c4; }
+        .color-5 { background-color: #6a4c93; }
+        #reset-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #1982c4;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        #reset-button:hover {
+            background-color: #136aa0;
+        }
+    </style>
+</head>
+<body>
+    <h1>さめがめ</h1>
+    <div id="game-container">
+        <div id="info-panel">
+            <span>スコア: <span id="score">0</span></span>
+        </div>
+        <div id="game-board"></div>
+    </div>
+    <button id="reset-button">リセット</button>
+    <script>
+        const ROWS = 20;
+        const COLS = 25;
+        const NUM_COLORS = 5;
+        const gameBoard = document.getElementById('game-board');
+        const scoreDisplay = document.getElementById('score');
+        const resetButton = document.getElementById('reset-button');
+        let audioContext = null;
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        function playPopSound(count) {
+            if (!audioContext) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            const now = audioContext.currentTime;
+            const baseFreq = 200 + count * 20;
+            oscillator.type = 'triangle';
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.4, now + 0.01);
+            oscillator.frequency.setValueAtTime(baseFreq * 1.5, now);
+            oscillator.frequency.exponentialRampToValueAtTime(baseFreq, now + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+            oscillator.start(now);
+            oscillator.stop(now + 0.2);
+        }
+        function playGameOverSound() {
+            if (!audioContext) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            const now = audioContext.currentTime;
+            oscillator.type = 'sawtooth';
+            gainNode.gain.setValueAtTime(0.3, now);
+            oscillator.frequency.setValueAtTime(160, now);
+            oscillator.frequency.exponentialRampToValueAtTime(80, now + 0.5);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+            oscillator.start(now);
+            oscillator.stop(now + 0.5);
+        }
+        let boardData = [];
+        let score = 0;
+        let isGameOver = false;
+        function init() {
+            score = 0;
+            isGameOver = false;
+            updateScoreDisplay();
+            gameBoard.style.gridTemplateColumns = `repeat(${COLS}, 30px)`;
+            gameBoard.style.gridTemplateRows = `repeat(${ROWS}, 30px)`;
+            boardData = [];
+            for (let r = 0; r < ROWS; r++) {
+                const row = [];
+                for (let c = 0; c < COLS; c++) {
+                    row.push(Math.floor(Math.random() * NUM_COLORS) + 1);
+                }
+                boardData.push(row);
+            }
+            renderBoard();
+            checkGameOver();
+        }
+        function renderBoard() {
+            gameBoard.innerHTML = '';
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const block = document.createElement('div');
+                    if (boardData[r][c] !== 0) {
+                        block.className = `block color-${boardData[r][c]}`;
+                        block.dataset.row = r;
+                        block.dataset.col = c;
+                        block.addEventListener('click', handleBlockClick);
+                        block.addEventListener('mouseover', handleMouseOver);
+                        block.addEventListener('mouseout', handleMouseOut);
+                    } else {
+                        block.className = 'block';
+                        block.style.backgroundColor = 'transparent';
+                        block.style.border = 'none';
+                        block.style.cursor = 'default';
+                    }
+                    gameBoard.appendChild(block);
+                }
+            }
+        }
+        function handleMouseOver(event) {
+            const row = parseInt(event.target.dataset.row);
+            const col = parseInt(event.target.dataset.col);
+            const color = boardData[row][col];
+            if (color === 0) return;
+            const connectedBlocks = findConnectedBlocks(row, col, color);
+            if (connectedBlocks.length < 2) return;
+            connectedBlocks.forEach(b => {
+                const index = b.r * COLS + b.c;
+                const blockElement = gameBoard.children[index];
+                if (blockElement) {
+                    blockElement.classList.add('highlight-group');
+                }
+            });
+        }
+        function handleMouseOut() {
+            const highlighted = document.querySelectorAll('#game-board .highlight-group');
+            highlighted.forEach(el => {
+                el.classList.remove('highlight-group');
+            });
+        }
+        function handleBlockClick(event) {
+            initAudioContext();
+            if (isGameOver) return;
+            const row = parseInt(event.target.dataset.row);
+            const col = parseInt(event.target.dataset.col);
+            const color = boardData[row][col];
+            if (color === 0) return;
+            const connectedBlocks = findConnectedBlocks(row, col, color);
+            if (connectedBlocks.length < 2) return;
+            playPopSound(connectedBlocks.length);
+            score += connectedBlocks.length * (connectedBlocks.length - 1);
+            updateScoreDisplay();
+            connectedBlocks.forEach(b => { boardData[b.r][b.c] = 0; });
+            dropBlocks();
+            slideColumns();
+            renderBoard();
+            if (checkGameOver()) {
+                isGameOver = true;
+                playGameOverSound();
+                setTimeout(() => alert(`ゲームオーバー！\n最終スコア: ${score}`), 100);
+            }
+        }
+        function findConnectedBlocks(startRow, startCol, color) {
+            const queue = [{r: startRow, c: startCol}];
+            const visited = new Set([`${startRow},${startCol}`]);
+            const connected = [];
+            while (queue.length > 0) {
+                const { r, c } = queue.shift();
+                connected.push({ r, c });
+                const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                for (const [dr, dc] of directions) {
+                    const newR = r + dr;
+                    const newC = c + dc;
+                    const key = `${newR},${newC}`;
+                    if (newR >= 0 && newR < ROWS && newC >= 0 && newC < COLS &&
+                        !visited.has(key) && boardData[newR][newC] === color) {
+                        visited.add(key);
+                        queue.push({ r: newR, c: newC });
+                    }
+                }
+            }
+            return connected;
+        }
+        function dropBlocks() {
+            for (let c = 0; c < COLS; c++) {
+                let emptyRow = ROWS - 1;
+                for (let r = ROWS - 1; r >= 0; r--) {
+                    if (boardData[r][c] !== 0) {
+                        [boardData[emptyRow][c], boardData[r][c]] = [boardData[r][c], boardData[emptyRow][c]];
+                        emptyRow--;
+                    }
+                }
+            }
+        }
+        function slideColumns() {
+            let emptyCols = 0;
+            for (let c = 0; c < COLS; c++) {
+                const isColumnEmpty = boardData[ROWS - 1][c] === 0;
+                if (!isColumnEmpty && emptyCols > 0) {
+                    for (let r = 0; r < ROWS; r++) {
+                        boardData[r][c - emptyCols] = boardData[r][c];
+                        boardData[r][c] = 0;
+                    }
+                }
+                if (isColumnEmpty) {
+                    emptyCols++;
+                }
+            }
+        }
+        function checkGameOver() {
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const color = boardData[r][c];
+                    if (color === 0) continue;
+                    if (c + 1 < COLS && boardData[r][c + 1] === color) return false;
+                    if (r + 1 < ROWS && boardData[r + 1][c] === color) return false;
+                }
+            }
+            return true;
+        }
+        function updateScoreDisplay() {
+            scoreDisplay.textContent = score;
+        }
+        resetButton.addEventListener('click', init);
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
