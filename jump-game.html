@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ジャンプゲーム</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: sans-serif;
+        }
+        
+        canvas {
+            background-color: #d0e0f0;
+            border: 2px solid #fff;
+            cursor: crosshair;
+        }
+
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let audioCtx, chargeOscillator = null,
+            chargeGain = null;
+        let gameState, player, camera, mouse, chargePower, goalPlatform;
+        const GRAVITY = 0.3,
+            AIR_FRICTION = 0.995,
+            GROUND_FRICTION = 0.95,
+            WALL_BOUNCE = 0.5,
+            MAX_CHARGE_POWER = 20,
+            CHARGE_RATE = 0.2;
+        const platforms = [{
+                x: -200,
+                y: 580,
+                width: 800,
+                height: 20
+            }, {
+                x: 200,
+                y: 450,
+                width: 150,
+                height: 20
+            },
+            {
+                x: 500,
+                y: 350,
+                width: 200,
+                height: 20
+            }, {
+                x: 300,
+                y: 200,
+                width: 100,
+                height: 20
+            },
+            {
+                x: 50,
+                y: 100,
+                width: 150,
+                height: 20
+            }, {
+                x: 250,
+                y: -50,
+                width: 80,
+                height: 20
+            },
+            {
+                x: 500,
+                y: -150,
+                width: 200,
+                height: 20
+            }, {
+                x: 800,
+                y: -50,
+                width: 150,
+                height: 20
+            },
+            {
+                x: 1000,
+                y: -200,
+                width: 150,
+                height: 20
+            }, {
+                x: 1200,
+                y: 580,
+                width: 400,
+                height: 20
+            },
+            {
+                x: 1400,
+                y: 400,
+                width: 150,
+                height: 20,
+                isGoal: true
+            }
+        ];
+        canvas.addEventListener('mousedown', (e) => {
+            if (!audioCtx) {
+                try {
+                    audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                } catch (err) {
+                    console.error("Web Audio API is not supported.");
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            if (!gameState.isGameActive) {
+                initializeGame();
+                return;
+            }
+            if (player.isGrounded) {
+                mouse.isDown = true;
+                playChargeSound();
+            }
+        });
+        window.addEventListener('mouseup', (e) => {
+            if (mouse.isDown) {
+                mouse.isDown = false;
+                stopChargeSound();
+                if (chargePower > 1) {
+                    playJumpSound();
+                }
+                jump();
+            }
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+
+        function initializeGame() {
+            player = {
+                x: 100,
+                y: 550,
+                prevY: 550,
+                vx: 0,
+                vy: 0,
+                radius: 15,
+                rotation: 0,
+                color: '#3498db',
+                isGrounded: false
+            };
+            camera = {
+                x: 0,
+                y: 0,
+                smoothing: 0.05
+            };
+            mouse = {
+                x: 0,
+                y: 0,
+                isDown: false
+            };
+            chargePower = 0;
+            gameState = {
+                isGameActive: true,
+                startTime: Date.now(),
+                elapsedTime: 0
+            };
+            goalPlatform = platforms.find(p => p.isGoal);
+        }
+
+        function playChargeSound() {
+            if (!audioCtx || chargeOscillator) return;
+            chargeOscillator = audioCtx.createOscillator();
+            chargeGain = audioCtx.createGain();
+            chargeOscillator.type = 'sawtooth';
+            chargeOscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
+            chargeGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            chargeGain.gain.linearRampToValueAtTime(0.10, audioCtx.currentTime + 0.1);
+            chargeOscillator.connect(chargeGain).connect(audioCtx.destination);
+            chargeOscillator.start();
+        }
+
+        function updateChargeSoundPitch() {
+            if (!chargeOscillator) return;
+            const baseFreq = 100,
+                maxFreq = 700;
+            const newFreq = baseFreq + (maxFreq - baseFreq) * (chargePower / MAX_CHARGE_POWER);
+            chargeOscillator.frequency.setTargetAtTime(newFreq, audioCtx.currentTime, 0.01);
+        }
+
+        function stopChargeSound() {
+            if (!chargeOscillator) return;
+            chargeGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+            chargeOscillator.stop(audioCtx.currentTime + 0.1);
+            chargeOscillator = null;
+            chargeGain = null;
+        }
+
+        function playJumpSound() {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator(),
+                gainNode = audioCtx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2);
+            oscillator.connect(gainNode).connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.25);
+        }
+
+        function jump() {
+            if (chargePower > 1) {
+                const worldMouseX = mouse.x + camera.x,
+                    worldMouseY = mouse.y + camera.y;
+                const angle = Math.atan2(worldMouseY - player.y, worldMouseX - player.x);
+                player.vx = Math.cos(angle) * chargePower;
+                player.vy = Math.sin(angle) * chargePower;
+                player.isGrounded = false;
+            }
+            chargePower = 0;
+        }
+
+        function update() {
+            if (!gameState.isGameActive) return;
+            gameState.elapsedTime = Date.now() - gameState.startTime;
+            player.prevY = player.y;
+            if (mouse.isDown && player.isGrounded) {
+                chargePower = Math.min(chargePower + CHARGE_RATE, MAX_CHARGE_POWER);
+                updateChargeSoundPitch();
+            }
+            if (player.isGrounded) {
+                player.vx *= GROUND_FRICTION;
+                player.rotation += player.vx / player.radius;
+                if (Math.abs(player.vx) < 0.1) player.vx = 0;
+            } else {
+                player.vy += GRAVITY;
+                player.vx *= AIR_FRICTION;
+            }
+            player.x += player.vx;
+            player.y += player.vy;
+            handleCollisions();
+            updateCamera();
+        }
+
+        function handleCollisions() {
+            player.isGrounded = false;
+            if (player.y > 1000) {
+                initializeGame();
+                return;
+            }
+            platforms.forEach(p => {
+                if (player.x + player.radius > p.x && player.x - player.radius < p.x + p.width) {
+                    if (player.vy >= 0 && player.prevY + player.radius <= p.y && player.y + player.radius >= p.y) {
+                        player.isGrounded = true;
+                        player.y = p.y - player.radius;
+                        player.vy = 0;
+                        if (p.isGoal) gameState.isGameActive = false;
+                    }
+                    if (player.vy < 0 && player.prevY - player.radius >= p.y + p.height && player.y - player.radius <= p.y + p.height) {
+                        player.y = p.y + p.height + player.radius;
+                        player.vy *= -WALL_BOUNCE;
+                    }
+                }
+            });
+        }
+
+        function updateCamera() {
+            const targetX = player.x - canvas.width / 2;
+            const targetY = player.y - canvas.height / 2 - 100;
+            camera.x += (targetX - camera.x) * camera.smoothing;
+            camera.y += (targetY - camera.y) * camera.smoothing;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+            platforms.forEach(p => {
+                ctx.fillStyle = p.isGoal ? '#e74c3c' : '#2c3e50';
+                ctx.fillRect(p.x, p.y, p.width, p.height);
+            });
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.rotation);
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(player.radius, 0);
+            ctx.stroke();
+            ctx.restore();
+            if (mouse.isDown && player.isGrounded) {
+                const worldMouseX = mouse.x + camera.x;
+                const worldMouseY = mouse.y + camera.y;
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y);
+                ctx.lineTo(worldMouseX, worldMouseY);
+                ctx.stroke();
+            }
+            ctx.restore();
+            drawHUD();
+        }
+
+        function drawHUD() {
+            ctx.fillStyle = '#111';
+            ctx.font = '20px sans-serif';
+            const timeString = (gameState.elapsedTime / 1000).toFixed(3);
+            ctx.fillText(`Time: ${timeString}s`, 10, 30);
+            if (mouse.isDown && player.isGrounded) {
+                const meterWidth = 100,
+                    meterHeight = 10,
+                    playerScreenX = player.x - camera.x,
+                    playerScreenY = player.y - camera.y;
+                ctx.fillStyle = '#bdc3c7';
+                ctx.fillRect(playerScreenX - meterWidth / 2, playerScreenY - player.radius - 20, meterWidth, meterHeight);
+                ctx.fillStyle = '#f1c40f';
+                const chargeWidth = (chargePower / MAX_CHARGE_POWER) * meterWidth;
+                ctx.fillRect(playerScreenX - meterWidth / 2, playerScreenY - player.radius - 20, chargeWidth, meterHeight);
+            }
+            if (gameState.isGameActive && goalPlatform) {
+                drawGoalArrow();
+            }
+            if (!gameState.isGameActive) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 60px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('GOAL!', canvas.width / 2, canvas.height / 2 - 40);
+                ctx.font = 'bold 30px sans-serif';
+                ctx.fillText(`Time: ${timeString}s`, canvas.width / 2, canvas.height / 2 + 20);
+                ctx.font = '20px sans-serif';
+                ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 70);
+                ctx.textAlign = 'left';
+            }
+        }
+
+        function drawGoalArrow() {
+            const goalCenter = {
+                x: goalPlatform.x + goalPlatform.width / 2,
+                y: goalPlatform.y + goalPlatform.height / 2
+            };
+            const goalScreenX = goalCenter.x - camera.x;
+            const goalScreenY = goalCenter.y - camera.y;
+            if (goalScreenX > 0 && goalScreenX < canvas.width && goalScreenY > 0 && goalScreenY < canvas.height) return;
+            const arrowAnchorX = 50,
+                arrowAnchorY = 70;
+            const angleToGoal = Math.atan2(goalCenter.y - player.y, goalCenter.x - player.x);
+            ctx.save();
+            ctx.translate(arrowAnchorX, arrowAnchorY);
+            ctx.rotate(angleToGoal);
+            ctx.fillStyle = 'rgba(231, 76, 60, 0.9)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(20, 0);
+            ctx.lineTo(-15, -12);
+            ctx.lineTo(-10, 0);
+            ctx.lineTo(-15, 12);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        initializeGame();
+        gameLoop();
+
+    </script>
+</body>
+
+</html>
